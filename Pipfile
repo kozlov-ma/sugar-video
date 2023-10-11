@@ -5,7 +5,7 @@ name = "pypi"
 
 [packages]
 parse = "*"
-ffmpeg = "*"
+ffmpeg-python = "*"
 
 [dev-packages]
 
