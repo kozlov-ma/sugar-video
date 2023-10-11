@@ -45,6 +45,7 @@ class Clip:
         stream = ffmpeg.setpts(stream, f"{1 / x}*PTS")
 
         ffmpeg.output(stream, filename=file).run()
+        print('A')
 
         return Clip(self.name, file, self.version + 1)
 

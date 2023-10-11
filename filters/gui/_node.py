@@ -1,12 +1,14 @@
 from dataclasses import dataclass
 from typing import Union, List, Dict, Callable, Any
 from enum import Enum
+from ..filter import Filter, NoopFilter, VideoClipFilter, SpeedXFilter
 
 
 class NodeType(Enum):
     NONE_TYPE = 0,
     VIDEO_CLIP = 1,
-    NOOP_FILTER = 2
+    NOOP_FILTER = 2,
+    SPEED_X_FILTER = 3
 
 
 @dataclass
@@ -34,6 +36,7 @@ class Output:
 class Node:
     id: Union[int, str]
     node_type: NodeType
+    filter: Filter
     
     
 links: Dict[Union[int, str], Link] = {}
@@ -56,8 +59,19 @@ def log_decorator(function: Callable) -> Callable:
 
 
 @log_decorator
-def add_node(node_id: Union[int, str], node_type: NodeType) -> None:
-    nodes[node_id] = Node(node_id, node_type)
+def add_node(node_id: Union[int, str], node_type: NodeType, **kwargs) -> None:
+    f = None
+
+    match node_type:
+        case NodeType.VIDEO_CLIP:
+            f = VideoClipFilter(kwargs['path'])
+        case NodeType.NOOP_FILTER:
+            f = NoopFilter()
+        case NodeType.SPEED_X_FILTER:
+            f = SpeedXFilter(kwargs['x'])
+
+    print(f)
+    nodes[node_id] = Node(node_id, node_type, f)
     
     
 @log_decorator
@@ -76,11 +90,17 @@ def add_link(link_id: Union[int, str], output_id: Union[int, str], input_id: Uni
     links[link_id] = link
     outputs[output_id].linked_nodes.append(inputs[input_id].owner_node)
     inputs[input_id].linked_node = outputs[output_id].owner_node
+    nodes[outputs[output_id].owner_node].filter.filter = nodes[inputs[input_id].owner_node].filter
     
 
 @log_decorator
 def remove_link(link_id: Union[int, str]) -> None:
     link: Link = links.pop(link_id)
     outputs[link.output_id].linked_nodes.remove(inputs[link.input_id].owner_node)
-    inputs[link.input_id].linked_node = None    
+    inputs[link.input_id].linked_node = None
     
+
+@log_decorator
+def preview_node(node_id: Union[int, str]) -> None:
+    node: Node = nodes[node_id]
+    node.filter()
