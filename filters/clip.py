@@ -1,89 +1,67 @@
-import dataclasses
-import functools
 import os
 import pathlib
 import typing
-from abc import abstractmethod, ABC
 from dataclasses import dataclass
 
 import ffmpeg
 
 from filters.timestamp import TimeStamp
 
-
-@functools.lru_cache(512)
-def temp_file_path(name: str, version: int | str, extension: str | None = None) -> pathlib.Path:
-    TEMP_DIR = pathlib.Path("./temp/")
-    if extension is not None:
-        return pathlib.Path(f"{TEMP_DIR}/{name}/{version}.{extension}")
-
-    return pathlib.Path(f"{TEMP_DIR}/{name}/{version}")
+TEMP_DIR = pathlib.Path("./temp/")
 
 
-@functools.lru_cache(512)
-def vclip_name(name: str) -> str:
-    return f"{name}_vclip"
-
+def ensure_tempdir_exists():
+    if not os.path.exists(TEMP_DIR):
+        os.makedirs(TEMP_DIR)
 
 @dataclass
-class BaseClip:
+class Clip:
     name: str
-
-    @abstractmethod
-    def export_temp(self) -> pathlib.Path:
-        pass
-
-    @abstractmethod
-    def export_as(self, path: pathlib.Path):
-        pass
-
-
-@dataclass
-class VideoClip(BaseClip):
     source: pathlib.Path
-    speed_x: float | None = None
-    cut_from: TimeStamp | None = None
-    cut_to: TimeStamp | None = None
+    version: int = 0
 
-    def export_as(self, path: pathlib.Path):
+    def file_name(self) -> pathlib.Path:
+        if self.version == 0:
+            return self.source
+
+        extension = os.path.splitext(self.source)[1]
+        if extension != "":
+            return pathlib.Path(f"{TEMP_DIR}/{self.name}/{self.version}.{extension}")
+
+        return pathlib.Path(f"{TEMP_DIR}/{self.name}/{self.version}")
+
+    def new_version_file_name(self) -> pathlib.Path:
+        version = self.version + 1
+        extension = os.path.splitext(self.source)[1]
+
+        if extension != "":
+            return pathlib.Path(f"{TEMP_DIR}/{self.name}/{version}.{extension}")
+
+        return pathlib.Path(f"{TEMP_DIR}/{self.name}/{version}")
+
+    def speed_x(self, x: float) -> typing.Self:
+        file = self.new_version_file_name()
         stream = ffmpeg.input(self.source)
+        stream = ffmpeg.setpts(stream, f"{1 / x}*PTS")
 
-        if self.speed_x is not None:
-            stream = ffmpeg.setpts(stream, f"{1 / self.speed_x}*PTS")
+        ffmpeg.output(stream, filename=file).run()
 
-        if self.cut_from is not None:
-            if self.cut_to is not None:
-                stream = ffmpeg.trim(stream, start=str(self.cut_from), end=str(self.cut_to))
-            else:
-                stream = ffmpeg.trim(stream, start=str(self.cut_from))
-        elif self.cut_to is not None:
-            stream = ffmpeg.trim(stream, start="00:00:00", end=str(self.cut_to))
+        return Clip(self.name, file, self.version + 1)
 
-        stream.output(path).run()
+    def cut_from(self, timestamp: TimeStamp):
+        file = self.new_version_file_name()
+        stream = ffmpeg.input(self.source)
+        stream = ffmpeg.trim(stream, start=str(timestamp))
 
-    def export_temp(self) -> pathlib.Path:
-        file = temp_file_path(self.name, hash(self), os.path.splitext(self.source)[1])
-        self.export_as(file)
+        ffmpeg.output(stream, file).run()
 
-        return file
+        return Clip(self.name, file, self.version + 1)
 
-    @classmethod
-    def from_clip(cls, clip: BaseClip) -> typing.Self:
-        if not isinstance(clip, VideoClip):
-            file = clip.export_temp()
-            vclip = VideoClip(vclip_name(clip.name), file)
-            return vclip
+    def cut_to(self, timestamp: TimeStamp):
+        file = self.new_version_file_name()
+        stream = ffmpeg.input(self.source)
+        stream = ffmpeg.trim(stream, end=str(timestamp))
 
-        else:
-            return dataclasses.replace(clip)
+        ffmpeg.output(stream, file).run()
 
-
-@dataclass
-class Filter(ABC):
-    @abstractmethod
-    def export_temp(self) -> pathlib.Path:
-        pass
-
-    @abstractmethod
-    def export_as(self, path: pathlib.Path):
-        pass
+        return Clip(self.name, file, self.version + 1)
