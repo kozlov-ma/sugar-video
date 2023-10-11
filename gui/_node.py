@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Union, List, Dict, Callable
+from typing import Union, List, Dict, Callable, Any
 from enum import Enum
 
 
@@ -19,31 +19,33 @@ class Link:
 @dataclass
 class Input:
     id: Union[int, str]
+    owner_node: Union[int, str]
     linked_node: Union[int, str, None]
     
 
 @dataclass
 class Output:
     id: Union[int, str]
-    linked_node: List[Union[int, str]]
+    owner_node: Union[int, str]
+    linked_nodes: List[Union[int, str]]
 
 
 @dataclass
 class Node:
     id: Union[int, str]
     node_type: NodeType
-    input_link: Dict[Union[int, str], Input]
-    output_links: Dict[Union[int, str], Output]
     
     
 links: Dict[Union[int, str], Link] = {}
 nodes: Dict[Union[int, str], Node] = {}
+inputs: Dict[Union[int, str], Input] = {}
+outputs: Dict[Union[int, str], Output] = {}
 
 
 def log_decorator(function: Callable) -> Callable:
     def wrapper(*args, **kwargs):
         print(args, kwargs, function)
-        result = function(*args, **kwargs)
+        result: Any = function(*args, **kwargs)
         
         print(links)
         print(nodes)
@@ -55,22 +57,30 @@ def log_decorator(function: Callable) -> Callable:
 
 @log_decorator
 def add_node(node_id: Union[int, str], node_type: NodeType) -> None:
-    nodes[node_id] = Node(node_id, node_type, {}, {})
+    nodes[node_id] = Node(node_id, node_type)
     
     
 @log_decorator
+def add_input(node_id: Union[int, str], input_id: Union[int, str]) -> None:
+    inputs[input_id] = Input(input_id, node_id, None)
+
+
+@log_decorator
+def add_output(node_id: Union[int, str], output_id: Union[int, str]) -> None:
+    outputs[output_id] = Output(output_id, node_id, [])
+
+
+@log_decorator
 def add_link(link_id: Union[int, str], output_id: Union[int, str], input_id: Union[int, str]) -> None:
-    link = Link(link_id, output_id, input_id)
+    link: Link = Link(link_id, output_id, input_id)
     links[link_id] = link
-    # TODO: Связь связывает не ноды, а нод атрибуты. Надо переделать это на нод атрибуты
-    # nodes[output_id].output_links.append(link)
-    # nodes[input_id].input_link = link
+    outputs[output_id].linked_nodes.append(inputs[input_id].owner_node)
+    inputs[input_id].linked_node = outputs[output_id].owner_node
     
 
 @log_decorator
 def remove_link(link_id: Union[int, str]) -> None:
-    link = links.pop(link_id)
-    # TODO: Связь связывает не ноды, а нод атрибуты. Надо переделать это
-    # nodes[link.input_id].input_link = None
-    # nodes[link.output_id].output_links.remove(link)
+    link: Link = links.pop(link_id)
+    outputs[link.output_id].linked_nodes.remove(inputs[link.input_id].owner_node)
+    inputs[link.input_id].linked_node = None    
     

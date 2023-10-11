@@ -1,5 +1,5 @@
 import dearpygui.dearpygui as dpg
-from node import create_node, create_video_clip_node, create_noop_filter_node
+from node import create_video_clip_node, create_noop_filter_node
 from _node import add_link, remove_link
 
 
@@ -48,6 +48,7 @@ def run() -> None:
     dpg.destroy_context()
     
 
-create_context()
-create_video_editor()
-run()    
+if __name__ == '__main__':
+    create_context()
+    create_video_editor()
+    run()
