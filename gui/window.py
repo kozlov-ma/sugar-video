@@ -7,12 +7,10 @@ WIDTH = 800
 HEIGHT = 600
 
 
-def create_context() -> None:
+def run() -> None:
     dpg.create_context()
     dpg.create_viewport(title='Sugar Video', width=WIDTH, height=HEIGHT)
 
-
-def create_video_editor() -> None:
     def link_callback(sender, app_data, user_data) -> None:
         link_id = dpg.add_node_link(app_data[0], app_data[1], parent=sender)
         add_link(link_id, app_data[0], app_data[1])
@@ -26,6 +24,10 @@ def create_video_editor() -> None:
         
     def create_noop_filter_node_callback(sender, app_data, user_data) -> None:
         create_noop_filter_node(user_data)
+
+    def viewport_resize_callback(sender, app_data, user_data) -> None:
+        dpg.set_item_width('video_editor', app_data[0])
+        dpg.set_item_height('video_editor', app_data[1])
     
     with dpg.window(label='Video Editor', tag='video_editor', width=WIDTH, height=HEIGHT):
         with dpg.menu_bar(label='Video Editor Menu Bar'):
@@ -40,15 +42,12 @@ def create_video_editor() -> None:
                              callback=link_callback, delink_callback=delink_callback):
             pass
 
-
-def run() -> None:
     dpg.setup_dearpygui()
+    dpg.set_viewport_resize_callback(viewport_resize_callback)
     dpg.show_viewport()
     dpg.start_dearpygui()
     dpg.destroy_context()
     
 
 if __name__ == '__main__':
-    create_context()
-    create_video_editor()
     run()
