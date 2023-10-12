@@ -10,9 +10,10 @@ from filters.timestamp import TimeStamp
 TEMP_DIR = pathlib.Path("./temp/")
 
 
-def ensure_tempdir_exists():
-    if not os.path.exists(TEMP_DIR):
-        os.makedirs(TEMP_DIR)
+def create_dirs(path: pathlib.Path):
+    dir_path = os.path.split(path)[0]
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path)
 
 @dataclass
 class Clip:
@@ -41,28 +42,40 @@ class Clip:
 
     def speed_x(self, x: float) -> typing.Self:
         file = self.new_version_file_name()
-        stream = ffmpeg.input(self.source)
-        stream = ffmpeg.setpts(stream, f"{1 / x}*PTS")
+        audio = ffmpeg.input(self.source).audio
+        video = ffmpeg.input(self.source).video
 
-        ffmpeg.output(stream, filename=file).run()
+        video = ffmpeg.setpts(video, f"{1 / x}*PTS")
+        audio = audio.filter('atempo', f"{x}" )
+
+        create_dirs(file)
+        ffmpeg.output(video, audio, filename=file).overwrite_output().run()
         print('A')
 
         return Clip(self.name, file, self.version + 1)
 
     def cut_from(self, timestamp: TimeStamp):
         file = self.new_version_file_name()
-        stream = ffmpeg.input(self.source)
-        stream = ffmpeg.trim(stream, start=str(timestamp))
+        audio = ffmpeg.input(self.source).audio
+        video = ffmpeg.input(self.source).video
+        
+        audio = audio.filter("atrim", start=f"{timestamp}").filter("asetpts", "PTS-STARTPTS")
+        video = video.filter("trim", start=f"{timestamp}").filter("setpts", "PTS-STARTPTS")
 
-        ffmpeg.output(stream, file).run()
+        create_dirs(file)
+        ffmpeg.output(video, audio, filename=file).overwrite_output().run()
 
         return Clip(self.name, file, self.version + 1)
 
     def cut_to(self, timestamp: TimeStamp):
         file = self.new_version_file_name()
-        stream = ffmpeg.input(self.source)
-        stream = ffmpeg.trim(stream, end=str(timestamp))
+        audio = ffmpeg.input(self.source).audio
+        video = ffmpeg.input(self.source).video
 
-        ffmpeg.output(stream, file).run()
+        audio = audio.filter("atrim", end=f"{timestamp}").filter("asetpts", "PTS-STARTPTS")
+        video = video.filter("trim", end=f"{timestamp}").filter("setpts", "PTS-STARTPTS")
+
+        create_dirs(file)
+        ffmpeg.output(video, audio, filename=file).overwrite_output().run()
 
         return Clip(self.name, file, self.version + 1)

@@ -17,16 +17,17 @@ class Filter(ABC):
         pass
 
 
-class VideoClipFilter(Filter):
+class VideoInput(Filter):
     def __init__(self, path: pathlib.Path):
         super().__init__(None)
         self.source = path
 
     def __call__(self) -> Clip:
+        print("called input")
         return Clip('Бобрик', source=self.source)
 
 
-class NoopFilter(Filter):
+class Noop(Filter):
     def __init__(self, f: typing.Union[Filter, None] = None):
         super().__init__(f)
 
@@ -37,12 +38,34 @@ class NoopFilter(Filter):
         return self.filter()
 
 
-class SpeedXFilter(Filter):
+@dataclasses.dataclass
+class CutFrom(Filter):
+    timestamp: TimeStamp
+
+    def __call__(self) -> Clip:
+        if self.filter is None:
+            return None
+
+        return self.filter().cut_from(self.timestamp)
+
+@dataclasses.dataclass
+class CutTo(Filter):
+    timestamp: TimeStamp
+
+    def __call__(self) -> Clip:
+        if self.filter is None:
+            return None
+
+        return self.filter().cut_to(self.timestamp)
+
+
+class SpeedX(Filter):
     def __init__(self, x: float, f: typing.Union[Filter, None] = None):
         super().__init__(f)
         self.x = x
 
     def __call__(self) -> Clip:
+        print('called speedxs')
         if self.filter is None:
             return None
 
