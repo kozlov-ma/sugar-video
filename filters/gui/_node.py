@@ -77,7 +77,6 @@ def add_node(node_id: Union[int, str], node_type: NodeType, **kwargs) -> None:
         case NodeType.CUT_TO:
             f = CutTo(kwargs['timestamp'])
 
-    print(f)
     nodes[node_id] = Node(node_id, node_type, f)
 
 
