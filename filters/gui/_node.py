@@ -5,15 +5,6 @@ from enum import Enum
 from ..filter import Filter, Noop, VideoInput, SpeedX, CutFrom, CutTo
 
 
-class NodeType(Enum):
-    NONE_TYPE = 0,
-    VIDEO_CLIP = 1,
-    NOOP_FILTER = 2,
-    SPEED_X_FILTER = 3,
-    CUT_FROM = 4,
-    CUT_TO = 5
-
-
 @dataclass
 class Link:
     id: Union[int, str]
@@ -38,7 +29,6 @@ class Output:
 @dataclass
 class Node:
     id: Union[int, str]
-    node_type: NodeType
     filter: Filter
 
 
@@ -62,22 +52,8 @@ def log_decorator(function: Callable) -> Callable:
 
 
 @log_decorator
-def add_node(node_id: Union[int, str], node_type: NodeType, **kwargs) -> None:
-    f = None
-
-    match node_type:
-        case NodeType.VIDEO_CLIP:
-            f = VideoInput(kwargs['path'])
-        case NodeType.NOOP_FILTER:
-            f = Noop()
-        case NodeType.SPEED_X_FILTER:
-            f = SpeedX(kwargs['x'])
-        case NodeType.CUT_FROM:
-            f = CutFrom(kwargs['timestamp'])
-        case NodeType.CUT_TO:
-            f = CutTo(kwargs['timestamp'])
-
-    nodes[node_id] = Node(node_id, node_type, f)
+def add_node(node: Node) -> None:
+    nodes[node.id] = node
 
 
 @log_decorator

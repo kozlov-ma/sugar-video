@@ -1,8 +1,10 @@
 import pathlib
 from typing import Union
 import dearpygui.dearpygui as dpg
-from ._node import add_node, NodeType, add_input, add_output, preview_node, nodes
+from ._node import add_node, Node, add_input, add_output, preview_node, nodes
 from ..timestamp import TimeStamp
+from ..filter import Filter, Noop, VideoInput, SpeedX, CutFrom, CutTo
+
 
 WIDTH = 100
 HEIGHT = 80
@@ -12,7 +14,7 @@ def create_node(parent: Union[int, str] = None) -> int:
     with dpg.node(parent=parent) as node_id:
         pass
     
-    add_node(node_id, NodeType.NONE_TYPE)
+    add_node(Node(node_id, None))
     
     return node_id
 
@@ -43,8 +45,9 @@ def create_video_clip_node(parent: Union[int, str] = None) -> Union[int, str]:
         with dpg.node_attribute(label='Preview Video', attribute_type=dpg.mvNode_Attr_Static):
             dpg.add_button(label='Preview video', callback=lambda: preview_node(node_id))
     
-    add_node(node_id, NodeType.VIDEO_CLIP, path=pathlib.Path('./Бобер.mp4'))
-    node = nodes[node_id].filter
+    node = Node(node_id, VideoInput(pathlib.Path('./Бобер.mp4')))
+    add_node(node)
+    node = node.filter
     
     return node_id
 
@@ -62,7 +65,7 @@ def create_noop_filter_node(parent: Union[int, str] = None) -> Union[int, str]:
         with dpg.node_attribute(label='Preview Video', attribute_type=dpg.mvNode_Attr_Static):
             dpg.add_button(label='Preview video', callback=lambda: preview_node(node_id))
             
-    add_node(node_id, NodeType.NOOP_FILTER)
+    add_node(Node(node_id, Noop()))
 
     return node_id
 
@@ -88,8 +91,9 @@ def create_speed_x_filter_node(parent: Union[int, str] = None) -> Union[int, str
         with dpg.node_attribute(label='Preview Video', attribute_type=dpg.mvNode_Attr_Static):
             dpg.add_button(label='Preview video', callback=lambda: preview_node(node_id))
 
-    add_node(node_id, NodeType.SPEED_X_FILTER, x=1.0)
-    node = nodes[node_id].filter
+    node = Node(node_id, SpeedX(1.0))
+    add_node(node)
+    node = node.filter
 
     return node_id
 
@@ -115,7 +119,8 @@ def create_cut_from_filter_node(parent: Union[int, str] = None) -> Union[int, st
         with dpg.node_attribute(label='Preview Video', attribute_type=dpg.mvNode_Attr_Static):
             dpg.add_button(label='Preview video', callback=lambda: preview_node(node_id))
 
-    add_node(node_id, NodeType.CUT_FROM, timestamp=TimeStamp.from_str("00:00:00"))
+    node = Node(node_id, CutFrom(TimeStamp.from_str("00:00:00")))
+    add_node(node)
     node = nodes[node_id].filter
 
     return node_id
@@ -142,7 +147,8 @@ def create_cut_to_filter_node(parent: Union[int, str] = None) -> Union[int, str]
         with dpg.node_attribute(label='Preview Video', attribute_type=dpg.mvNode_Attr_Static):
             dpg.add_button(label='Preview video', callback=lambda: preview_node(node_id))
 
-    add_node(node_id, NodeType.CUT_TO, timestamp=TimeStamp.from_str("00:00:00"))
-    node = nodes[node_id].filter
+    node = Node(node_id, CutTo(TimeStamp.from_str("00:00:00")))
+    add_node(node)
+    node = node.filter
 
     return node_id
