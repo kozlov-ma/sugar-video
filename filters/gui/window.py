@@ -1,7 +1,6 @@
 import dearpygui.dearpygui as dpg
 from ._node import add_link, remove_link, preview_node
-from .node import create_video_clip_node, create_noop_filter_node, create_speed_x_filter_node, \
-    create_cut_from_filter_node, create_cut_to_filter_node
+from .node import builder
 
 WIDTH = 800
 HEIGHT = 600
@@ -19,39 +18,13 @@ def run() -> None:
         dpg.delete_item(app_data)
         remove_link(app_data)
 
-    def create_video_clip_node_callback(sender, app_data, user_data) -> None:
-        create_video_clip_node(user_data)
-
-    def create_noop_filter_node_callback(sender, app_data, user_data) -> None:
-        create_noop_filter_node(user_data)
-
-    def create_speed_x_filter_node_callback(sender, app_data, user_data) -> None:
-        create_speed_x_filter_node(user_data)
-
-    def create_cut_from_filter_node_callback(sender, app_data, user_data) -> None:
-        create_cut_from_filter_node(user_data)
-
-    def create_cut_to_filter_node_callback(sender, app_data, user_data) -> None:
-        create_cut_to_filter_node(user_data)
-
     def viewport_resize_callback(sender, app_data, user_data) -> None:
         dpg.set_item_width('video_editor', app_data[0])
         dpg.set_item_height('video_editor', app_data[1])
 
     with dpg.window(label='Video Editor', tag='video_editor', width=WIDTH, height=HEIGHT):
         with dpg.menu_bar(label='Video Editor Menu Bar'):
-            with dpg.menu(label='Nodes'):
-                dpg.add_menu_item(label='Video Clip',
-                                  user_data='node_editor', callback=create_video_clip_node_callback)
-                with dpg.menu(label='Filters'):
-                    dpg.add_menu_item(label='Filter Noop',
-                                      user_data='node_editor', callback=create_noop_filter_node_callback)
-                    dpg.add_menu_item(label='Filter Speed X',
-                                      user_data='node_editor', callback=create_speed_x_filter_node_callback)
-                    dpg.add_menu_item(label='Filter Cut From',
-                                      user_data='node_editor', callback=create_cut_from_filter_node_callback)
-                    dpg.add_menu_item(label='Filter Cut To',
-                                      user_data='node_editor', callback=create_cut_to_filter_node_callback)
+            builder.build('node_editor')
 
         with dpg.node_editor(label='Node Editor', tag='node_editor',
                              callback=link_callback, delink_callback=delink_callback):

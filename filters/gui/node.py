@@ -1,5 +1,5 @@
 import pathlib
-from typing import Union
+from typing import Union, Callable, Any
 import dearpygui.dearpygui as dpg
 from ._node import add_node, Node, add_input, add_output, preview_node, nodes
 from ..timestamp import TimeStamp
@@ -10,6 +10,28 @@ WIDTH = 100
 HEIGHT = 80
 
 
+class NodeMenuBuilder:
+    def __init__(self):
+        self.nodes: dict[str, Callable[[Any, Any, int | str], int | str]] = {}
+
+    def decorate(self, node_name: str):
+        def decorator(function: Callable[[int | str], int]):
+            self.nodes[node_name] = lambda _sender, _app_data, user_data: function(user_data)
+            return function
+
+        return decorator
+
+    def build(self, node_editor_tag: str):
+        with dpg.menu(label='Nodes'):
+            for node_name in self.nodes:
+                dpg.add_menu_item(label=node_name, callback=self.nodes[node_name],
+                                  user_data=node_editor_tag)
+
+
+builder = NodeMenuBuilder()
+
+
+@builder.decorate('Node')
 def create_node(parent: Union[int, str] = None) -> int:
     with dpg.node(parent=parent) as node_id:
         pass
@@ -19,6 +41,7 @@ def create_node(parent: Union[int, str] = None) -> int:
     return node_id
 
 
+@builder.decorate('Video Clip')
 def create_video_clip_node(parent: Union[int, str] = None) -> Union[int, str]:
     node = None
     node_id = None
@@ -26,7 +49,7 @@ def create_video_clip_node(parent: Union[int, str] = None) -> Union[int, str]:
     def callback(sender, app_data):
         print(app_data)
         dpg.set_value(f'video_name_{node_id}', app_data['file_name'])
-        node.path = app_data['file_path_name']
+        node.source = app_data['file_path_name']
         node.name = app_data['file_path_name']
         print('aboba')
     
@@ -54,6 +77,7 @@ def create_video_clip_node(parent: Union[int, str] = None) -> Union[int, str]:
     return node_id
 
 
+@builder.decorate('Noop')
 def create_noop_filter_node(parent: Union[int, str] = None) -> Union[int, str]:
     with dpg.node(label='Noop Filter', parent=parent) as node_id:
         with dpg.node_attribute(label='Source Video', attribute_type=dpg.mvNode_Attr_Input) as attribute_id:
@@ -72,6 +96,7 @@ def create_noop_filter_node(parent: Union[int, str] = None) -> Union[int, str]:
     return node_id
 
 
+@builder.decorate('Speed X')
 def create_speed_x_filter_node(parent: Union[int, str] = None) -> Union[int, str]:
     node = None
     def input_callback(sender, app_data):
@@ -100,6 +125,7 @@ def create_speed_x_filter_node(parent: Union[int, str] = None) -> Union[int, str
     return node_id
 
 
+@builder.decorate('Cut From')
 def create_cut_from_filter_node(parent: Union[int, str] = None) -> Union[int, str]:
     node = None
 
@@ -128,6 +154,7 @@ def create_cut_from_filter_node(parent: Union[int, str] = None) -> Union[int, st
     return node_id
 
 
+@builder.decorate('Cut To')
 def create_cut_to_filter_node(parent: Union[int, str] = None) -> Union[int, str]:
     node = None
 
