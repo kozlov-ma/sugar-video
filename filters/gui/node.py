@@ -27,6 +27,8 @@ def create_video_clip_node(parent: Union[int, str] = None) -> Union[int, str]:
         print(app_data)
         dpg.set_value(f'video_name_{node_id}', app_data['file_name'])
         node.path = app_data['file_path_name']
+        node.name = app_data['file_path_name']
+        print('aboba')
     
     def cancel_callback():
         print('Cancel...')
@@ -45,7 +47,7 @@ def create_video_clip_node(parent: Union[int, str] = None) -> Union[int, str]:
         with dpg.node_attribute(label='Preview Video', attribute_type=dpg.mvNode_Attr_Static):
             dpg.add_button(label='Preview video', callback=lambda: preview_node(node_id))
     
-    node = Node(node_id, VideoInput(pathlib.Path('./Бобер.mp4')))
+    node = Node(node_id, VideoInput(pathlib.Path('./Бобер.mp4'), 'Бобер'))
     add_node(node)
     node = node.filter
     
