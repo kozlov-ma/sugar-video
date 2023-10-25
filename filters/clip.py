@@ -1,3 +1,4 @@
+import functools
 import os
 import pathlib
 import typing
@@ -14,6 +15,11 @@ def create_dirs(path: pathlib.Path):
     dir_path = os.path.split(path)[0]
     if not os.path.exists(dir_path):
         os.makedirs(dir_path)
+
+
+def path_from_actions(name: str, ext: str, actions: list[str]) -> pathlib.Path:
+    return pathlib.Path(TEMP_DIR) / '/'.join(actions) / f"{name}.{ext.strip('.')}"
+
 
 @dataclass
 class Clip:
