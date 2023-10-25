@@ -19,63 +19,21 @@ def create_dirs(path: pathlib.Path):
 class Clip:
     name: str
     source: pathlib.Path
-    version: int = 0
+    actions: list[str]
 
-    def file_name(self) -> pathlib.Path:
-        if self.version == 0:
-            return self.source
+    @property
+    def file_exists(self):
+        return os.path.exists(self.source)
 
-        extension = os.path.splitext(self.source)[1]
-        if extension != "":
-            return pathlib.Path(f"{TEMP_DIR}/{self.name}/{self.version}.{extension}")
+    def __init__(self, name: str, source: pathlib.Path, action_list: list[str] = None):
+        self.name = name
+        self.source = source
+        self.actions = action_list if action_list else list()
+        create_dirs(self.source)
 
-        return pathlib.Path(f"{TEMP_DIR}/{self.name}/{self.version}")
+    def create_new(self, action: str, new_name: str | None = None) -> typing.Self:
+        new_name = new_name if new_name else self.name
 
-    def new_version_file_name(self) -> pathlib.Path:
-        version = self.version + 1
-        extension = os.path.splitext(self.source)[1]
-
-        if extension != "":
-            return pathlib.Path(f"{TEMP_DIR}/{self.name}/{version}.{extension}")
-
-        return pathlib.Path(f"{TEMP_DIR}/{self.name}/{version}")
-
-    def speed_x(self, x: float) -> typing.Self:
-        file = self.new_version_file_name()
-        audio = ffmpeg.input(self.source).audio
-        video = ffmpeg.input(self.source).video
-
-        video = ffmpeg.setpts(video, f"{1 / x}*PTS")
-        audio = audio.filter('atempo', f"{x}" )
-
-        create_dirs(file)
-        ffmpeg.output(video, audio, filename=file).overwrite_output().run()
-        print('A')
-
-        return Clip(self.name, file, self.version + 1)
-
-    def cut_from(self, timestamp: TimeStamp):
-        file = self.new_version_file_name()
-        audio = ffmpeg.input(self.source).audio
-        video = ffmpeg.input(self.source).video
-        
-        audio = audio.filter("atrim", start=f"{timestamp}").filter("asetpts", "PTS-STARTPTS")
-        video = video.filter("trim", start=f"{timestamp}").filter("setpts", "PTS-STARTPTS")
-
-        create_dirs(file)
-        ffmpeg.output(video, audio, filename=file).overwrite_output().run()
-
-        return Clip(self.name, file, self.version + 1)
-
-    def cut_to(self, timestamp: TimeStamp):
-        file = self.new_version_file_name()
-        audio = ffmpeg.input(self.source).audio
-        video = ffmpeg.input(self.source).video
-
-        audio = audio.filter("atrim", end=f"{timestamp}").filter("asetpts", "PTS-STARTPTS")
-        video = video.filter("trim", end=f"{timestamp}").filter("setpts", "PTS-STARTPTS")
-
-        create_dirs(file)
-        ffmpeg.output(video, audio, filename=file).overwrite_output().run()
-
-        return Clip(self.name, file, self.version + 1)
+        new_action_list = self.actions + [action]
+        path = path_from_actions(new_name, 'mp4', new_action_list)
+        return Clip(new_name, path, new_action_list)
