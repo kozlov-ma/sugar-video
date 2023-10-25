@@ -14,11 +14,12 @@ TEMP_DIR = pathlib.Path("./temp/")
 def create_dirs(path: pathlib.Path):
     dir_path = os.path.split(path)[0]
     if not os.path.exists(dir_path):
+        print("DirPath", dir_path)
         os.makedirs(dir_path)
 
 
 def path_from_actions(name: str, ext: str, actions: list[str]) -> pathlib.Path:
-    return pathlib.Path(TEMP_DIR) / '/'.join(actions) / f"{name}.{ext.strip('.')}"
+    return pathlib.Path(TEMP_DIR) / name / '/'.join(actions) / f"{name}.{ext.strip('.')}"
 
 
 @dataclass
@@ -35,6 +36,7 @@ class Clip:
         self.name = name
         self.source = source
         self.actions = action_list if action_list else list()
+        print(f"New clip: {self}")
         create_dirs(self.source)
 
     def create_new(self, action: str, new_name: str | None = None) -> typing.Self:

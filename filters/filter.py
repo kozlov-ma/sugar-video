@@ -23,7 +23,7 @@ class VideoInput(Filter):
 
     def __call__(self) -> Clip:
         print("called input")
-        return Clip(self.name, source=self.source)
+        return Clip(self.name, source=self.source, action_list=[repr(self)])
 
 
 @dataclasses.dataclass(repr=True)
