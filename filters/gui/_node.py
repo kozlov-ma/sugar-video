@@ -86,5 +86,5 @@ def remove_link(link_id: Union[int, str]) -> None:
 @log_decorator
 def preview_node(node_id: Union[int, str]) -> None:
     node: Node = nodes[node_id]
-    file = node.filter().file_name()
+    file = node.filter().source
     os.system(f'open "{file}"')
