@@ -17,7 +17,7 @@ class Filter(ABC):
         pass
 
     @abstractmethod
-    def set_filter(self, filter: "Filter" | None = None, index=0):
+    def set_filter(self, filter: typing.Self | None = None, index=0):
         pass
 
 
