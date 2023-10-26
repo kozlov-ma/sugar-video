@@ -160,6 +160,9 @@ def create_video_clip_node(parent: Union[int, str] = None) -> Union[int, str]:
         dpg.add_file_extension('.mp4', color=(100, 250, 40))
 
     with dpg.node(label='Video Clip', parent=parent) as node_id:
+        node = Node(node_id, filter)
+        add_node(node)
+
         with dpg.node_attribute(label='Video Clip', attribute_type=dpg.mvNode_Attr_Output) as attribute_id:
             dpg.add_text(tag=f'video_name_{node_id}', default_value='Video not loaded')
             dpg.add_button(label='Load video file', callback=lambda: dpg.show_item("file_dialog_id"))
@@ -167,9 +170,6 @@ def create_video_clip_node(parent: Union[int, str] = None) -> Union[int, str]:
 
         with dpg.node_attribute(label='Preview Video', attribute_type=dpg.mvNode_Attr_Static):
             dpg.add_button(label='Preview video', callback=lambda: preview_node(node_id))
-
-    node = Node(node_id, filter)
-    add_node(node)
 
     return node_id
 
