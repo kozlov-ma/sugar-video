@@ -33,6 +33,7 @@ class VideoInput(Filter):
     def set_filter(self, filter: Filter | None = None, index=0):
         pass
 
+
 @dataclasses.dataclass(repr=True)
 class ImageInput(Filter):
     source: pathlib.Path
@@ -50,6 +51,7 @@ class ImageInput(Filter):
     def set_filter(self, filter: Filter | None = None, index=0):
         pass
 
+
 @dataclasses.dataclass
 class Noop(Filter):
     filter: Filter | None = None
@@ -60,7 +62,7 @@ class Noop(Filter):
 
         return self.filter()
 
-    def set_filter(self, filter: Filter | None = None, index = 0):
+    def set_filter(self, filter: Filter | None = None, index=0):
         self.filter = filter
 
 
@@ -92,7 +94,7 @@ class CutFrom(Filter):
 
         return new_clip
 
-    def set_filter(self, filter: Filter | None = None, index = 0):
+    def set_filter(self, filter: Filter | None = None, index=0):
         self.filter = filter
 
 
@@ -124,7 +126,7 @@ class CutTo(Filter):
 
         return new_clip
 
-    def set_filter(self, filter: Filter | None = None, index = 0):
+    def set_filter(self, filter: Filter | None = None, index=0):
         self.filter = filter
 
 
@@ -156,7 +158,7 @@ class SpeedX(Filter):
 
         return new_clip
 
-    def set_filter(self, filter: Filter | None = None, index = 0):
+    def set_filter(self, filter: Filter | None = None, index=0):
         self.filter = filter
 
 
@@ -172,18 +174,23 @@ class Concat(Filter):
         in_first = self.first()
         in_second = self.second()
 
-        stream_first = ffmpeg.input(in_first.source)
-        stream_second = ffmpeg.input(in_second.source)
+        audio_first = ffmpeg.input(in_first.source).audio
+        video_first = ffmpeg.input(in_first.source).video
+
+        audio_second = ffmpeg.input(in_second.source).audio
+        video_second = ffmpeg.input(in_second.source).video
 
         new_name = f"{in_first.name} + {in_second.name}"
         new_clip = Clip(new_name)
 
-        ffmpeg.concat(stream_first, stream_second).overwrite_output().output(
-            new_clip.source).run()
+        audio = ffmpeg.concat(audio_first, audio_second, a=1, v=0)
+        video = ffmpeg.concat(video_first, video_second)
+
+        ffmpeg.output(video, audio, filename=new_clip.source).overwrite_output().run()
 
         return new_clip
 
-    def set_filter(self, filter: Filter | None = None, index = 0):
+    def set_filter(self, filter: Filter | None = None, index=0):
         match index:
             case 0:
                 self.first = filter
