@@ -187,5 +187,7 @@ class Concat(Filter):
         match index:
             case 0:
                 self.first = filter
+                print("set filter 0")
             case 1:
                 self.second = filter
+                print("set filter 1")
