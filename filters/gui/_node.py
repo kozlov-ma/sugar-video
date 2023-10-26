@@ -30,6 +30,14 @@ class Output:
 class Node:
     id: Union[int, str]
     filter: Filter
+    inputs: list[Input]
+    outputs: list[Output]
+
+    def __init__(self, id: int | str, filter: Filter):
+        self.id = id
+        self.filter = filter
+        self.inputs = []
+        self.outputs = []
 
 
 links: Dict[Union[int, str], Link] = {}
@@ -61,11 +69,13 @@ def add_node(node: Node) -> None:
 @log_decorator
 def add_input(node_id: Union[int, str], input_id: Union[int, str]) -> None:
     inputs[input_id] = Input(input_id, node_id, None)
+    nodes[node_id].inputs.append(inputs[input_id])
 
 
 @log_decorator
 def add_output(node_id: Union[int, str], output_id: Union[int, str]) -> None:
     outputs[output_id] = Output(output_id, node_id, [])
+    nodes[node_id].outputs.append(outputs[output_id])
 
 
 @log_decorator
@@ -74,8 +84,9 @@ def add_link(link_id: Union[int, str], output_id: Union[int, str], input_id: Uni
     links[link_id] = link
     outputs[output_id].linked_nodes.append(inputs[input_id].owner_node)
     inputs[input_id].linked_node = outputs[output_id].owner_node
-    nodes[inputs[input_id].owner_node].filter.filter = nodes[outputs[output_id].owner_node].filter
-    print('called add link', nodes[inputs[input_id].owner_node].filter.filter)
+    nodes[inputs[input_id].owner_node].filter.set_filter(nodes[outputs[output_id].owner_node].filter,
+                                                  nodes[outputs[output_id].owner_node].outputs.index(outputs[output_id]))
+    print('called add link', nodes[inputs[input_id].owner_node].filter)
 
 
 @log_decorator

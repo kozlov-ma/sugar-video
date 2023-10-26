@@ -1,11 +1,11 @@
 from __future__ import annotations
 import pathlib
 from enum import Enum
-from typing import Union, Callable, Any, Generic, TypeVar
+from typing import Union, Callable, Any
 import dearpygui.dearpygui as dpg
 from ._node import add_node, Node, add_input, add_output, preview_node
 from ..timestamp import TimeStamp
-from ..filter import Filter, Noop, VideoInput, SpeedX, CutFrom, CutTo
+from ..filter import Filter, Noop, VideoInput, SpeedX, CutFrom, CutTo, Concat
 
 WIDTH = 100
 HEIGHT = 80
@@ -91,12 +91,12 @@ class NodeBuilder:
         filter = self.filter_creator()
 
         with dpg.node(label=self.node_name, parent=parent) as node_id:
+            add_node(Node(node_id, filter))
             for attribute in self.attributes:
                 with dpg.node_attribute(label=attribute.name, attribute_type=attribute.type.value) as attribute_id:
                     self._add_content(attribute, node_id, attribute_id, filter)
                     self._add_attribute(attribute, node_id, attribute_id, filter)
 
-        add_node(Node(node_id, filter))
         return node_id
 
     def _add_content(self, attribute: NodeAttribute, node_id: int | str,
@@ -212,6 +212,16 @@ builder.decorate('Cut To')(
                 content_type=NodeAttributeContentType.INPUT_TEXT,
                 callback_type=NodeAttributeCallbackType.SET_FIELD)
     .add_input('Source Video')
+    .add_output('Result Video')
+    .add_static('Preview', content_type=NodeAttributeContentType.BUTTON,
+                callback_type=NodeAttributeCallbackType.PREVIEW)
+    .build
+)
+
+builder.decorate('Concat')(
+    NodeBuilder('Concat', lambda: Concat())
+    .add_input('First Video')
+    .add_input('Second Video')
     .add_output('Result Video')
     .add_static('Preview', content_type=NodeAttributeContentType.BUTTON,
                 callback_type=NodeAttributeCallbackType.PREVIEW)
