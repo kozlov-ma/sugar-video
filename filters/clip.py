@@ -9,7 +9,7 @@ import ffmpeg
 
 from filters.timestamp import TimeStamp
 
-TEMP_DIR = pathlib.Path("./temp/")
+TEMP_DIR = "./temp/"
 
 
 def create_dirs(path: pathlib.Path):
@@ -39,5 +39,5 @@ class Clip:
     def create_new(self, new_name: str | None = None) -> typing.Self:
         new_name = new_name if new_name else self.name
 
-        path = pathlib.Path(f"{TEMP_DIR}{uuid.uuid4()}/{new_name}.mp4")
+        path = pathlib.Path(f"{TEMP_DIR}/{uuid.uuid4()}/{new_name}.mp4")
         return Clip(new_name, path)
