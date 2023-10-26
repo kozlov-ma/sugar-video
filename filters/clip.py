@@ -2,6 +2,7 @@ import functools
 import os
 import pathlib
 import typing
+import uuid
 from dataclasses import dataclass
 
 import ffmpeg
@@ -18,30 +19,25 @@ def create_dirs(path: pathlib.Path):
         os.makedirs(dir_path)
 
 
-def path_from_actions(name: str, ext: str, actions: list[str]) -> pathlib.Path:
-    return pathlib.Path(TEMP_DIR) / name / '/'.join(actions) / f"{name}.{ext.strip('.')}"
-
-
 @dataclass
 class Clip:
     name: str
     source: pathlib.Path
-    actions: list[str]
 
     @property
     def file_exists(self):
         return os.path.exists(self.source)
 
-    def __init__(self, name: str, source: pathlib.Path, action_list: list[str] = None):
+    def __init__(self, name: str, source: pathlib.Path = None):
         self.name = name
+        if source is None:
+            source = pathlib.Path(f"{TEMP_DIR}{uuid.uuid4()}/{name}.mp4")
         self.source = source
-        self.actions = action_list if action_list else list()
         print(f"New clip: {self}")
         create_dirs(self.source)
 
-    def create_new(self, action: str, new_name: str | None = None) -> typing.Self:
+    def create_new(self, new_name: str | None = None) -> typing.Self:
         new_name = new_name if new_name else self.name
 
-        new_action_list = self.actions + [action]
-        path = path_from_actions(new_name, 'mp4', new_action_list)
-        return Clip(new_name, path, new_action_list)
+        path = pathlib.Path(f"{TEMP_DIR}{uuid.uuid4()}/{new_name}.mp4")
+        return Clip(new_name, path)
