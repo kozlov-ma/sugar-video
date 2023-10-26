@@ -147,7 +147,8 @@ def create_video_clip_node(parent: Union[int, str] = None) -> Union[int, str]:
         print(app_data)
         dpg.set_value(f'video_name_{node_id}', app_data['file_name'])
         filter.source = app_data['file_path_name']
-        filter.name = app_data['file_path_name']
+        filter.name = app_data['file_path_name'].split('.')[0].split('/')[-1]
+        print(filter.name)
         print('aboba')
 
     def cancel_callback():

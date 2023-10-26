@@ -1,11 +1,12 @@
 import dataclasses
 import pathlib
 import typing
+import uuid
 from abc import ABC, abstractmethod
 
 import ffmpeg
 
-from filters.clip import Clip, path_from_actions, create_dirs
+from filters.clip import Clip, create_dirs
 from filters.timestamp import TimeStamp
 
 
@@ -23,7 +24,7 @@ class VideoInput(Filter):
 
     def __call__(self) -> Clip:
         print("called input")
-        return Clip(self.name, source=self.source, action_list=[repr(self)])
+        return Clip(self.name, source=self.source)
 
 
 @dataclasses.dataclass(repr=True)
@@ -35,7 +36,7 @@ class ImageInput(Filter):
     def __call__(self) -> Clip:
         stream = ffmpeg.input(self.source)
         stream = stream.filter('loop', loop=1, size=self.duration_seconds * 25)
-        out = Clip(self.name, path_from_actions(self.name, "mp4", [repr(self)]), [repr(self)])
+        out = Clip(self.name)
         ffmpeg.overwrite_output().output(stream, out.source).run()
 
         return out
@@ -63,7 +64,7 @@ class CutFrom(Filter):
 
         in_clip = self.filter()
 
-        new_clip = in_clip.create_new(repr(self))
+        new_clip = in_clip.create_new()
         out_file = new_clip.source
         if new_clip.file_exists:
             return new_clip
@@ -71,8 +72,10 @@ class CutFrom(Filter):
         audio = ffmpeg.input(in_clip.source).audio
         video = ffmpeg.input(in_clip.source).video
 
-        audio = audio.filter("atrim", start=f"{self.timestamp}").filter("asetpts", "PTS-STARTPTS")
-        video = video.filter("trim", start=f"{self.timestamp}").filter("setpts", "PTS-STARTPTS")
+        audio = audio.filter("atrim", start=f"{self.timestamp}").filter(
+            "asetpts", "PTS-STARTPTS")
+        video = video.filter("trim", start=f"{self.timestamp}").filter("setpts",
+                                                                       "PTS-STARTPTS")
 
         ffmpeg.output(video, audio, filename=out_file).overwrite_output().run()
 
@@ -90,7 +93,7 @@ class CutTo(Filter):
 
         in_clip = self.filter()
 
-        new_clip = in_clip.create_new(repr(self))
+        new_clip = in_clip.create_new()
         out_file = new_clip.source
         if new_clip.file_exists:
             return new_clip
@@ -98,8 +101,10 @@ class CutTo(Filter):
         audio = ffmpeg.input(in_clip.source).audio
         video = ffmpeg.input(in_clip.source).video
 
-        audio = audio.filter("atrim", end=f"{self.timestamp}").filter("asetpts", "PTS-STARTPTS")
-        video = video.filter("trim", end=f"{self.timestamp}").filter("setpts", "PTS-STARTPTS")
+        audio = audio.filter("atrim", end=f"{self.timestamp}").filter("asetpts",
+                                                                      "PTS-STARTPTS")
+        video = video.filter("trim", end=f"{self.timestamp}").filter("setpts",
+                                                                     "PTS-STARTPTS")
 
         ffmpeg.output(video, audio, filename=out_file).overwrite_output().run()
 
@@ -117,9 +122,10 @@ class SpeedX(Filter):
 
         in_clip = self.filter()
 
-        new_clip = in_clip.create_new(repr(self))
+        new_clip = in_clip.create_new()
         out_file = new_clip.source
         if new_clip.file_exists:
+            print(f"old clip: {new_clip}")
             return new_clip
 
         audio = ffmpeg.input(in_clip.source).audio
@@ -150,9 +156,9 @@ class Concat(Filter):
         stream_second = ffmpeg.input(in_second.source)
 
         new_name = f"{in_first.name} + {in_second.name}"
-        new_actions = in_first.actions + in_second.actions + [repr(self)]
-        new_clip = Clip(new_name, path_from_actions(new_name, "mp4", new_actions), new_actions)
+        new_clip = Clip(new_name)
 
-        ffmpeg.concat(stream_first, stream_second).overwrite_output().output(new_clip.source).run()
+        ffmpeg.concat(stream_first, stream_second).overwrite_output().output(
+            new_clip.source).run()
 
         return new_clip
