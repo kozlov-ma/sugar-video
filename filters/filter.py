@@ -17,6 +17,13 @@ class Filter(ABC):
         pass
 
 
+@dataclasses.dataclass
+class CompositeFilter(Filter, ABC):
+    @abstractmethod
+    def set_filter(self, filter: Filter | None = None, index = 0):
+        pass
+
+
 @dataclasses.dataclass(repr=True)
 class VideoInput(Filter):
     source: pathlib.Path
@@ -43,7 +50,7 @@ class ImageInput(Filter):
 
 
 @dataclasses.dataclass
-class Noop(Filter):
+class Noop(CompositeFilter):
     filter: Filter | None = None
 
     def __call__(self) -> Clip:
@@ -52,9 +59,12 @@ class Noop(Filter):
 
         return self.filter()
 
+    def set_filter(self, filter: Filter | None = None, index = 0):
+        self.filter = filter
+
 
 @dataclasses.dataclass(repr=True)
-class CutFrom(Filter):
+class CutFrom(CompositeFilter):
     timestamp: TimeStamp
     filter: typing.Union[Filter, None] = None
 
@@ -81,9 +91,12 @@ class CutFrom(Filter):
 
         return new_clip
 
+    def set_filter(self, filter: Filter | None = None, index = 0):
+        self.filter = filter
+
 
 @dataclasses.dataclass(repr=True)
-class CutTo(Filter):
+class CutTo(CompositeFilter):
     timestamp: TimeStamp
     filter: typing.Union[Filter, None] = None
 
@@ -110,9 +123,12 @@ class CutTo(Filter):
 
         return new_clip
 
+    def set_filter(self, filter: Filter | None = None, index = 0):
+        self.filter = filter
+
 
 @dataclasses.dataclass(repr=True)
-class SpeedX(Filter):
+class SpeedX(CompositeFilter):
     x: float
     filter: typing.Union[Filter, None] = None
 
@@ -139,9 +155,12 @@ class SpeedX(Filter):
 
         return new_clip
 
+    def set_filter(self, filter: Filter | None = None, index = 0):
+        self.filter = filter
+
 
 @dataclasses.dataclass(repr=True)
-class Concat(Filter):
+class Concat(CompositeFilter):
     first: Filter | None = None
     second: Filter | None = None
 
@@ -162,3 +181,10 @@ class Concat(Filter):
             new_clip.source).run()
 
         return new_clip
+
+    def set_filter(self, filter: Filter | None = None, index = 0):
+        match index:
+            case 0:
+                self.first = filter
+            case 1:
+                self.second = filter
