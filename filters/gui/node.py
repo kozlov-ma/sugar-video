@@ -53,12 +53,14 @@ class NodeAttributeCallbackType(Enum):
 
 class NodeAttribute:
     def __init__(self, name: str, filter_field: str | None, type: NodeAttributeType,
-                 content_type: NodeAttributeContentType, callback_type: NodeAttributeCallbackType):
+                 content_type: NodeAttributeContentType, callback_type: NodeAttributeCallbackType,
+                 set_field_cast: Callable[[Any], Any] = lambda arg: arg):
         self.name: str = name
         self.filter_field: str | None = filter_field
         self.type: NodeAttributeType = type
         self.content_type = content_type
         self.callback_type = callback_type
+        self.set_field_cast: Callable[[Any], Any] = set_field_cast
 
 
 class NodeBuilder:
@@ -77,11 +79,12 @@ class NodeBuilder:
                                              NodeAttributeContentType.TEXT, NodeAttributeCallbackType.NONE))
         return self
 
-    def add_static(self, text: str, filter_field: str | None = None,
+    def add_static(self, text: str, *, filter_field: str | None = None,
+                   set_field_cast: Callable[[Any], Any] = lambda arg: arg,
                    content_type: NodeAttributeContentType = NodeAttributeContentType.TEXT,
                    callback_type: NodeAttributeCallbackType = NodeAttributeCallbackType.NONE) -> NodeBuilder:
         self.attributes.append(NodeAttribute(text, filter_field, NodeAttributeType.STATIC,
-                                             content_type, callback_type))
+                                             content_type, callback_type, set_field_cast))
         return self
 
     def build(self, parent: int | str) -> int:
@@ -121,7 +124,7 @@ class NodeBuilder:
                 return lambda _sender, _app_data, _user_data: preview_node(node_id)
             case NodeAttributeCallbackType.SET_FIELD:
                 return lambda _sender, _app_data, _user_data: (
-                    setattr(filter, attribute.filter_field, _app_data))
+                    setattr(filter, attribute.filter_field, attribute.set_field_cast(_app_data)))
 
     def _add_attribute(self, attribute: NodeAttribute, node_id: int | str,
                        attribute_id: int | str, filter: Filter) -> None:
@@ -192,7 +195,8 @@ builder.decorate('Speed X')(
 
 builder.decorate('Cut From')(
     NodeBuilder('Cut From', lambda: CutFrom(TimeStamp.from_str("00:00:00")))
-    .add_static('Timestamp', filter_field='timestamp', content_type=NodeAttributeContentType.INPUT_TEXT,
+    .add_static('Timestamp', filter_field='timestamp', set_field_cast=TimeStamp.from_str,
+                content_type=NodeAttributeContentType.INPUT_TEXT,
                 callback_type=NodeAttributeCallbackType.SET_FIELD)
     .add_input('Source Video')
     .add_output('Result Video')
@@ -203,7 +207,8 @@ builder.decorate('Cut From')(
 
 builder.decorate('Cut To')(
     NodeBuilder('Cut To', lambda: CutTo(TimeStamp.from_str("00:00:00")))
-    .add_static('Timestamp', 'timestamp', content_type=NodeAttributeContentType.INPUT_TEXT,
+    .add_static('Timestamp', filter_field='timestamp', set_field_cast=TimeStamp.from_str,
+                content_type=NodeAttributeContentType.INPUT_TEXT,
                 callback_type=NodeAttributeCallbackType.SET_FIELD)
     .add_input('Source Video')
     .add_output('Result Video')
