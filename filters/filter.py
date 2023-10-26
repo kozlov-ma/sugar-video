@@ -43,6 +43,8 @@ class ImageInput(Filter):
 
 @dataclasses.dataclass
 class Noop(Filter):
+    filter: Filter | None = None
+
     def __call__(self) -> Clip:
         if self.filter is None:
             return None

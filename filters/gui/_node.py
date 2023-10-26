@@ -45,6 +45,8 @@ def log_decorator(function: Callable) -> Callable:
 
         print(links)
         print(nodes)
+        print(inputs)
+        print(outputs)
 
         return result
 
@@ -86,5 +88,8 @@ def remove_link(link_id: Union[int, str]) -> None:
 @log_decorator
 def preview_node(node_id: Union[int, str]) -> None:
     node: Node = nodes[node_id]
-    file = node.filter().source
+    clip = node.filter()
+    if clip is None:
+        print('No content')
+    file = clip.source
     os.system(f'open "{file}"')
