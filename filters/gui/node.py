@@ -105,7 +105,8 @@ class NodeBuilder:
                 dpg.add_button(label=attribute.name,
                                callback=self._get_callback(attribute, node_id, attribute_id, filter))
             case NodeAttributeContentType.INPUT_TEXT:
-                pass
+                dpg.add_input_text(label=attribute.name, default_value='00:00:00', width=WIDTH,
+                                   callback=self._get_callback(attribute, node_id, attribute_id, filter))
             case NodeAttributeContentType.INPUT_FLOAT:
                 dpg.add_input_float(label=attribute.name, default_value=1, min_value=0.1, min_clamped=True,
                                     max_value=10, max_clamped=True, step=0.05, width=WIDTH,
@@ -189,58 +190,24 @@ builder.decorate('Speed X')(
     .build
 )
 
+builder.decorate('Cut From')(
+    NodeBuilder('Cut From', lambda: CutFrom(TimeStamp.from_str("00:00:00")))
+    .add_static('Timestamp', filter_field='timestamp', content_type=NodeAttributeContentType.INPUT_TEXT,
+                callback_type=NodeAttributeCallbackType.SET_FIELD)
+    .add_input('Source Video')
+    .add_output('Result Video')
+    .add_static('Preview', content_type=NodeAttributeContentType.BUTTON,
+                callback_type=NodeAttributeCallbackType.PREVIEW)
+    .build
+)
 
-@builder.decorate('Cut From')
-def create_cut_from_filter_node(parent: Union[int, str] = None) -> Union[int, str]:
-    filter = CutFrom(TimeStamp.from_str("00:00:00"))
-
-    def input_callback(_, app_data: str):
-        filter.timestamp = TimeStamp.from_str(app_data)
-
-    with dpg.node(label='Cut From Filter', parent=parent) as node_id:
-        with dpg.node_attribute(label='Timestamp', attribute_type=dpg.mvNode_Attr_Static):
-            dpg.add_input_text(label='Timestamp', default_value='00:00:00', width=WIDTH, callback=input_callback)
-
-        with dpg.node_attribute(label='Source Video', attribute_type=dpg.mvNode_Attr_Input) as attribute_id:
-            dpg.add_text(default_value='Source Video')
-            add_input(node_id, attribute_id)
-
-        with dpg.node_attribute(label='Result Video', attribute_type=dpg.mvNode_Attr_Output) as attribute_id:
-            dpg.add_text(default_value='Result Video')
-            add_output(node_id, attribute_id)
-
-        with dpg.node_attribute(label='Preview Video', attribute_type=dpg.mvNode_Attr_Static):
-            dpg.add_button(label='Preview video', callback=lambda: preview_node(node_id))
-
-    node = Node(node_id, filter)
-    add_node(node)
-
-    return node_id
-
-
-@builder.decorate('Cut To')
-def create_cut_to_filter_node(parent: Union[int, str] = None) -> Union[int, str]:
-    filter = CutTo(TimeStamp.from_str("00:00:00"))
-
-    def input_callback(_, app_data: str):
-        filter.timestamp = TimeStamp.from_str(app_data)
-
-    with dpg.node(label='Cut To Filter', parent=parent) as node_id:
-        with dpg.node_attribute(label='Timestamp', attribute_type=dpg.mvNode_Attr_Static):
-            dpg.add_input_text(label='Timestamp', default_value='00:00:00', width=WIDTH, callback=input_callback)
-
-        with dpg.node_attribute(label='Source Video', attribute_type=dpg.mvNode_Attr_Input) as attribute_id:
-            dpg.add_text(default_value='Source Video')
-            add_input(node_id, attribute_id)
-
-        with dpg.node_attribute(label='Result Video', attribute_type=dpg.mvNode_Attr_Output) as attribute_id:
-            dpg.add_text(default_value='Result Video')
-            add_output(node_id, attribute_id)
-
-        with dpg.node_attribute(label='Preview Video', attribute_type=dpg.mvNode_Attr_Static):
-            dpg.add_button(label='Preview video', callback=lambda: preview_node(node_id))
-
-    node = Node(node_id, filter)
-    add_node(node)
-
-    return node_id
+builder.decorate('Cut To')(
+    NodeBuilder('Cut To', lambda: CutTo(TimeStamp.from_str("00:00:00")))
+    .add_static('Timestamp', 'timestamp', content_type=NodeAttributeContentType.INPUT_TEXT,
+                callback_type=NodeAttributeCallbackType.SET_FIELD)
+    .add_input('Source Video')
+    .add_output('Result Video')
+    .add_static('Preview', content_type=NodeAttributeContentType.BUTTON,
+                callback_type=NodeAttributeCallbackType.PREVIEW)
+    .build
+)
