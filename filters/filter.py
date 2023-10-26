@@ -16,11 +16,8 @@ class Filter(ABC):
     def __call__(self) -> Clip:
         pass
 
-
-@dataclasses.dataclass
-class CompositeFilter(Filter, ABC):
     @abstractmethod
-    def set_filter(self, filter: Filter | None = None, index = 0):
+    def set_filter(self, filter: "Filter" | None = None, index=0):
         pass
 
 
@@ -33,6 +30,8 @@ class VideoInput(Filter):
         print("called input")
         return Clip(self.name, source=self.source)
 
+    def set_filter(self, filter: Filter | None = None, index=0):
+        pass
 
 @dataclasses.dataclass(repr=True)
 class ImageInput(Filter):
@@ -48,9 +47,11 @@ class ImageInput(Filter):
 
         return out
 
+    def set_filter(self, filter: Filter | None = None, index=0):
+        pass
 
 @dataclasses.dataclass
-class Noop(CompositeFilter):
+class Noop(Filter):
     filter: Filter | None = None
 
     def __call__(self) -> Clip:
@@ -64,7 +65,7 @@ class Noop(CompositeFilter):
 
 
 @dataclasses.dataclass(repr=True)
-class CutFrom(CompositeFilter):
+class CutFrom(Filter):
     timestamp: TimeStamp
     filter: typing.Union[Filter, None] = None
 
@@ -96,7 +97,7 @@ class CutFrom(CompositeFilter):
 
 
 @dataclasses.dataclass(repr=True)
-class CutTo(CompositeFilter):
+class CutTo(Filter):
     timestamp: TimeStamp
     filter: typing.Union[Filter, None] = None
 
@@ -128,7 +129,7 @@ class CutTo(CompositeFilter):
 
 
 @dataclasses.dataclass(repr=True)
-class SpeedX(CompositeFilter):
+class SpeedX(Filter):
     x: float
     filter: typing.Union[Filter, None] = None
 
@@ -160,7 +161,7 @@ class SpeedX(CompositeFilter):
 
 
 @dataclasses.dataclass(repr=True)
-class Concat(CompositeFilter):
+class Concat(Filter):
     first: Filter | None = None
     second: Filter | None = None
 
