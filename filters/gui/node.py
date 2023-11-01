@@ -49,6 +49,7 @@ class NodeAttributeCallbackType(Enum):
     NONE = 0
     PREVIEW = 1
     SET_FIELD = 2
+    LOAD_FILE = 3
 
 
 class NodeAttribute:
@@ -125,6 +126,21 @@ class NodeBuilder:
             case NodeAttributeCallbackType.SET_FIELD:
                 return lambda _sender, _app_data, _user_data: (
                     setattr(filter, attribute.filter_field, attribute.set_field_cast(_app_data)))
+            case NodeAttributeCallbackType.LOAD_FILE:
+                def callback(_, app_data):
+                    dpg.set_value(f'video_name_{node_id}', app_data['file_name'])
+                    filter.source = app_data['file_path_name']
+                    filter.name = app_data['file_path_name'].split('.')[0].split('/')[-1]
+
+                def cancel_callback():
+                    print('Cancel...')
+
+                with dpg.file_dialog(
+                        directory_selector=False, show=False, callback=callback, tag=f"file_dialog_{node_id}",
+                        cancel_callback=cancel_callback, width=700, height=400):
+                    dpg.add_file_extension('.mp4', color=(100, 250, 40))
+
+                return lambda: dpg.show_item(f"file_dialog_{node_id}")
 
     def _add_attribute(self, attribute: NodeAttribute, node_id: int | str,
                        attribute_id: int | str, filter: Filter) -> None:
@@ -136,6 +152,17 @@ class NodeBuilder:
 
 
 builder = NodeMenuBuilder()
+
+
+builder.decorate('New Video Clip')(
+    NodeBuilder('New Video Clip', lambda: VideoInput(pathlib.Path(''), ''))
+    .add_static('Load video', content_type=NodeAttributeContentType.BUTTON,
+                callback_type=NodeAttributeCallbackType.LOAD_FILE)
+    .add_output('Result Video')
+    .add_static('Preview Video', content_type=NodeAttributeContentType.BUTTON,
+                callback_type=NodeAttributeCallbackType.PREVIEW)
+    .build
+)
 
 
 @builder.decorate('Video Clip')
