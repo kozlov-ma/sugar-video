@@ -134,8 +134,8 @@ class NodeBuilder:
                 return lambda _sender, _app_data, _user_data: (
                     setattr(filter, attribute.filter_field, attribute.set_field_cast(_app_data)))
             case NodeAttributeCallbackType.CUSTOM:
-                attribute.setup_callback(attribute, node_id, attribute_id)
-                return attribute.callback(attribute, node_id, attribute_id)
+                attribute.setup_callback(attribute, node_id, attribute_id, filter)
+                return attribute.callback(attribute, node_id, attribute_id, filter)
 
     def _add_attribute(self, attribute: NodeAttribute, node_id: int | str,
                        attribute_id: int | str, filter: Filter) -> None:
