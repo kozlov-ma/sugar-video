@@ -56,8 +56,8 @@ class NodeAttribute:
     def __init__(self, name: str, filter_field: str | None, type: NodeAttributeType,
                  content_type: NodeAttributeContentType, callback_type: NodeAttributeCallbackType,
                  set_field_cast: Callable[[Any], Any] = lambda arg: arg,
-                 callback: Callable[[NodeAttribute, int, int], Callable[[Any, Any, Any], None]] = lambda: None,
-                 setup_callback: Callable[[NodeAttribute, int, int], None] = lambda: None):
+                 callback: Callable[[NodeAttribute, int, int, Filter], Callable[[Any, Any, Any], None]] = lambda: None,
+                 setup_callback: Callable[[NodeAttribute, int, int, Filter], None] = lambda: None):
         self.name: str = name
         self.filter_field: str | None = filter_field
         self.type: NodeAttributeType = type
@@ -88,8 +88,8 @@ class NodeBuilder:
                    set_field_cast: Callable[[Any], Any] = lambda arg: arg,
                    content_type: NodeAttributeContentType = NodeAttributeContentType.TEXT,
                    callback_type: NodeAttributeCallbackType = NodeAttributeCallbackType.NONE,
-                   callback: Callable[[NodeAttribute, int, int], Callable[[Any, Any, Any], None]] = lambda: None,
-                   setup_callback: Callable[[NodeAttribute, int, int], None] = lambda: None) -> NodeBuilder:
+                   callback: Callable[[NodeAttribute, int, int, Filter], Callable[[Any, Any, Any], None]] = lambda: None,
+                   setup_callback: Callable[[NodeAttribute, int, int, Filter], None] = lambda: None) -> NodeBuilder:
         self.attributes.append(NodeAttribute(text, filter_field, NodeAttributeType.STATIC,
                                              content_type, callback_type, set_field_cast,
                                              callback, setup_callback))
@@ -149,11 +149,10 @@ class NodeBuilder:
 builder = NodeMenuBuilder()
 
 
-def video_clip_setup_callback(attribute: NodeAttribute, node_id: int, attribute_id: int):
+def video_clip_setup_callback(attribute: NodeAttribute, node_id: int, attribute_id: int, filter: Filter):
     def callback(_, app_data):
-        dpg.set_value(f'video_name_{node_id}', app_data['file_name'])
         filter.source = app_data['file_path_name']
-        filter.name = app_data['file_path_name'].split('.')[0].split('/')[-1]
+        filter.name = app_data['file_name']
 
     def cancel_callback():
         print('Cancel...')
@@ -164,12 +163,12 @@ def video_clip_setup_callback(attribute: NodeAttribute, node_id: int, attribute_
         dpg.add_file_extension('.mp4', color=(100, 250, 40))
 
 
-def video_clip_callback(attribute: NodeAttribute, node_id: int, attribute_id: int) -> Callable[[Any, Any, Any], None]:
+def video_clip_callback(attribute: NodeAttribute, node_id: int, attribute_id: int, filter: Filter) -> Callable[[Any, Any, Any], None]:
     return lambda _sender, _app_data, _user_data: dpg.show_item(f"file_dialog_{node_id}")
 
 
-builder.decorate('New Video Clip')(
-    NodeBuilder('New Video Clip', lambda: VideoInput(pathlib.Path(''), ''))
+builder.decorate('Video Clip')(
+    NodeBuilder('Video Clip', lambda: VideoInput(pathlib.Path(''), ''))
     .add_static('Load video', content_type=NodeAttributeContentType.BUTTON,
                 callback_type=NodeAttributeCallbackType.CUSTOM,
                 callback=video_clip_callback,
@@ -179,42 +178,6 @@ builder.decorate('New Video Clip')(
                 callback_type=NodeAttributeCallbackType.PREVIEW)
     .build
 )
-
-
-@builder.decorate('Video Clip')
-def create_video_clip_node(parent: Union[int, str] = None) -> Union[int, str]:
-    filter = VideoInput(pathlib.Path('./Бобер.mp4'), 'Beaver')
-    node_id = None
-
-    def callback(_, app_data):
-        print(app_data)
-        dpg.set_value(f'video_name_{node_id}', app_data['file_name'])
-        filter.source = app_data['file_path_name']
-        filter.name = app_data['file_path_name'].split('.')[0].split('/')[-1]
-        print(filter.name)
-        print('aboba')
-
-    def cancel_callback():
-        print('Cancel...')
-
-    with dpg.file_dialog(
-            directory_selector=False, show=False, callback=callback, tag="file_dialog_id",
-            cancel_callback=cancel_callback, width=700, height=400):
-        dpg.add_file_extension('.mp4', color=(100, 250, 40))
-
-    with dpg.node(label='Video Clip', parent=parent) as node_id:
-        node = Node(node_id, filter)
-        add_node(node)
-
-        with dpg.node_attribute(label='Video Clip', attribute_type=dpg.mvNode_Attr_Output) as attribute_id:
-            dpg.add_text(tag=f'video_name_{node_id}', default_value='Video not loaded')
-            dpg.add_button(label='Load video file', callback=lambda: dpg.show_item("file_dialog_id"))
-            add_output(node_id, attribute_id)
-
-        with dpg.node_attribute(label='Preview Video', attribute_type=dpg.mvNode_Attr_Static):
-            dpg.add_button(label='Preview video', callback=lambda: preview_node(node_id))
-
-    return node_id
 
 
 builder.decorate('Noop')(
