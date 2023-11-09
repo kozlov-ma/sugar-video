@@ -44,7 +44,7 @@ class ImageInput(Filter):
         stream = ffmpeg.input(self.source)
         stream = stream.filter('loop', loop=1, size=self.duration_seconds * 25)
         out = Clip(self.name)
-        ffmpeg.overwrite_output().output(stream, out.source).run()
+        ffmpeg.output(stream, out.source).overwrite_output().run()
 
         return out
 
