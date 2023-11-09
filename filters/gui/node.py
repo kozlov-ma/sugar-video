@@ -28,15 +28,15 @@ class NodeMenuBuilder:
                                   user_data=node_editor_tag)
 
 
-def add_result_video(node_id: int | str) -> None:
-    with dpg.node_attribute(label='Result Video', attribute_type=dpg.mvNode_Attr_Output) as attribute_id:
-        dpg.add_text(default_value='Result Video')
+def add_result_video(node_id: int | str, name: str = 'Result Video') -> None:
+    with dpg.node_attribute(label=name, attribute_type=dpg.mvNode_Attr_Output) as attribute_id:
+        dpg.add_text(default_value=name)
         add_output(node_id, attribute_id)
 
 
-def add_preview_video(node_id: int | str) -> None:
-    with dpg.node_attribute(label='Preview Video', attribute_type=dpg.mvNode_Attr_Static):
-        dpg.add_button(label='Preview video', callback=lambda: preview_node(node_id))
+def add_preview_video(node_id: int | str, name: str = 'Preview Video') -> None:
+    with dpg.node_attribute(label=name, attribute_type=dpg.mvNode_Attr_Static):
+        dpg.add_button(label=name, callback=lambda: preview_node(node_id))
 
 
 builder = NodeMenuBuilder()
@@ -304,8 +304,8 @@ def create_audio_track_filter(parent: int | str) -> int | str:
             dpg.add_text(default_value='Source Audio')
             add_input(node_id, attribute_id)
 
-        add_result_video(node_id)
-        add_preview_video(node_id)
+        add_result_video(node_id, name='Result Audio')
+        add_preview_video(node_id, name='Preview Audio')
 
     return node_id
 
