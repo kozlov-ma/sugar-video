@@ -85,7 +85,7 @@ def add_link(link_id: Union[int, str], output_id: Union[int, str], input_id: Uni
     outputs[output_id].linked_nodes.append(inputs[input_id].owner_node)
     inputs[input_id].linked_node = outputs[output_id].owner_node
     nodes[inputs[input_id].owner_node].filter.set_filter(nodes[outputs[output_id].owner_node].filter,
-                                                  nodes[inputs[input_id].owner_node].inputs.index(inputs[input_id]))
+                                                         nodes[inputs[input_id].owner_node].inputs.index(inputs[input_id]))
     print('called add link', nodes[inputs[input_id].owner_node].filter)
 
 
