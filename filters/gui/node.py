@@ -230,7 +230,7 @@ def create_image_filter(parent: int | str) -> int | str:
 
         with dpg.node_attribute(label='Image', attribute_type=dpg.mvNode_Attr_Output) as attribute_id:
             dpg.add_text(tag=f'image_name_{node_id}', default_value='Image not loaded')
-            dpg.add_button(label='Load image file', callback=lambda: dpg.show_item("file_dialog_id"))
+            dpg.add_button(label='Load image file', callback=lambda: dpg.show_item("image_file_dialog"))
             add_output(node_id, attribute_id)
 
         add_preview_video(node_id)
