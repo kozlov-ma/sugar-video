@@ -204,7 +204,7 @@ def create_image_filter(parent: int | str) -> int | str:
 
     def callback(sender, app_data):
         print(app_data)
-        dpg.set_value(f'video_name_{node_id}', app_data['file_name'])
+        dpg.set_value(f'image_name_{node_id}', app_data['file_name'])
         node.source = app_data['file_path_name']
         node.name = app_data['file_path_name']
         print('aboba')
