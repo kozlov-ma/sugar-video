@@ -180,6 +180,11 @@ def create_cut_to_filter_node(parent: Union[int, str] = None) -> Union[int, str]
 
 @builder.decorate('Concat')
 def create_concat(parent: int | str) -> int | str:
+    node = None
+
+    def smooth_concat_callback(sender: int | str, app_data: Any, user_data: Any) -> None:
+        node.filter.smooth = app_data
+
     with dpg.node(label='Concat Filter', parent=parent) as node_id:
         node = Node(node_id, Concat())
         add_node(node)
@@ -191,6 +196,9 @@ def create_concat(parent: int | str) -> int | str:
         with dpg.node_attribute(label='Second Video', attribute_type=dpg.mvNode_Attr_Input) as attribute_id:
             dpg.add_text(default_value='Second Video')
             add_input(node_id, attribute_id)
+
+        with dpg.node_attribute(label='Smooth Concat', attribute_type=dpg.mvNode_Attr_Static) as attribute_id:
+            dpg.add_checkbox(label='Smooth Concat', callback=smooth_concat_callback)
 
         add_result_video(node_id)
         add_preview_video(node_id)
@@ -219,7 +227,7 @@ def create_image_filter(parent: int | str) -> int | str:
         dpg.add_file_extension('.png', color=(200, 150, 40))
 
     def duration_callback(sender: int | str, app_data: Any, user_data: Any) -> None:
-        filter.duration = app_data
+        filter.duration_seconds = app_data
 
     with dpg.node(label='Image Input', parent=parent) as node_id:
         node = Node(node_id, ImageInput(pathlib.Path(''), '', 0))
