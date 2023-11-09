@@ -224,6 +224,7 @@ def create_image_filter(parent: int | str) -> int | str:
     with dpg.file_dialog(
             directory_selector=False, show=False, callback=callback, tag="image_file_dialog",
             cancel_callback=cancel_callback, width=700, height=400):
+        dpg.add_file_extension('.jpg', color=(200, 150, 40))
         dpg.add_file_extension('.png', color=(200, 150, 40))
 
     def duration_callback(sender: int | str, app_data: Any, user_data: Any) -> None:

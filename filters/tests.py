@@ -7,7 +7,7 @@ from filters.timestamp import TimeStamp
 
 class FilterTests(unittest.TestCase):
     def test_VideoInput(self):
-        source = 'Бобер.mp4'
+        source = '/Users/kozlov/Projects/sugar-video/Бобер.mp4'
         name = 'VideoInputTest'
         filter = VideoInput(source=source, name=name)
 
@@ -25,7 +25,7 @@ class FilterTests(unittest.TestCase):
         self.assertAlmostEqual(clip.duration, duration, delta=0.1)
 
     def test_ImageInput(self):
-        source = 'path/to/image.png'
+        source = "/Users/kozlov/Projects/sugar-video/png.jpg"
         name = 'ImageInputTest'
         duration_seconds = 5
         filter = ImageInput(source=source, name=name,
@@ -45,7 +45,7 @@ class FilterTests(unittest.TestCase):
         timestamp = TimeStamp(seconds=5)
 
         # Create a test clip
-        source = 'Бобер.mp4'
+        source = '/Users/kozlov/Projects/sugar-video/Бобер.mp4'
         name = 'TestClip'
         input_filter = VideoInput(source=source, name=name)
         clip = input_filter()
@@ -75,7 +75,7 @@ class FilterTests(unittest.TestCase):
         timestamp = TimeStamp(0, 0, 5)
 
         # Create a test clip
-        source = 'Бобер.mp4'
+        source = '/Users/kozlov/Projects/sugar-video/Бобер.mp4'
         name = 'TestClip'
         input_filter = VideoInput(source=source, name=name)
         clip = input_filter()

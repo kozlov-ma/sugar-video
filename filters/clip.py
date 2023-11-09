@@ -33,7 +33,7 @@ class Clip:
         if not self.file_exists:
             return -1
 
-        return ffmpeg.probe(self.source)['format']['duration']
+        return float(ffmpeg.probe(self.source)['format']['duration'])
 
     def __init__(self, name: str, source: pathlib.Path = None):
         self.name = name

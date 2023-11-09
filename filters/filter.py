@@ -41,10 +41,9 @@ class ImageInput(Filter):
     duration_seconds: int
 
     def __call__(self) -> Clip:
-        stream = ffmpeg.input(self.source)
-        stream = stream.filter('loop', loop=1, size=self.duration_seconds * 25)
+        stream = ffmpeg.input(self.source, loop=1, t=self.duration_seconds)
         out = Clip(self.name)
-        ffmpeg.output(stream, out.source).overwrite_output().run()
+        ffmpeg.output(stream, filename=out.source).overwrite_output().run()
 
         return out
 

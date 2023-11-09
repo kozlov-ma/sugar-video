@@ -49,6 +49,9 @@ class TimeStamp:
             return TimeStamp(res["hours"], res["minutes"], res["seconds"])
 
         raise ValueError("Wrong TimeStamp format")
+    
+    def to_seconds(self) -> float:
+        return self.hours * 60 * 60 + self.minutes * 60 + self.seconds + self.milliseconds / 1000
 
     def __str__(self) -> str:
         if self.milliseconds == 0:
