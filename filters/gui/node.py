@@ -3,7 +3,7 @@ from typing import Union, Callable, Any
 import dearpygui.dearpygui as dpg
 from ._node import add_node, Node, add_input, add_output, preview_node, nodes
 from ..timestamp import TimeStamp
-from ..filter import Filter, Noop, VideoInput, SpeedX, CutFrom, CutTo, Concat
+from ..filter import Filter, Noop, VideoInput, SpeedX, CutFrom, CutTo, Concat, ImageInput
 
 WIDTH = 100
 HEIGHT = 80
@@ -25,6 +25,17 @@ class NodeMenuBuilder:
             for node_name in self.nodes:
                 dpg.add_menu_item(label=node_name, callback=self.nodes[node_name],
                                   user_data=node_editor_tag)
+
+
+def add_result_video(node_id: int | str) -> None:
+    with dpg.node_attribute(label='Result Video', attribute_type=dpg.mvNode_Attr_Output) as attribute_id:
+        dpg.add_text(default_value='Result Video')
+        add_output(node_id, attribute_id)
+
+
+def add_preview_video(node_id: int | str) -> None:
+    with dpg.node_attribute(label='Preview Video', attribute_type=dpg.mvNode_Attr_Static):
+        dpg.add_button(label='Preview video', callback=lambda: preview_node(node_id))
 
 
 builder = NodeMenuBuilder()
@@ -54,7 +65,7 @@ def create_video_clip_node(parent: Union[int, str] = None) -> Union[int, str]:
         print('Cancel...')
 
     with dpg.file_dialog(
-            directory_selector=False, show=False, callback=callback, tag="file_dialog_id",
+            directory_selector=False, show=False, callback=callback, tag="video_file_dialog",
             cancel_callback=cancel_callback, width=700, height=400):
         dpg.add_file_extension('.mp4', color=(100, 250, 40))
 
@@ -64,14 +75,12 @@ def create_video_clip_node(parent: Union[int, str] = None) -> Union[int, str]:
 
         with dpg.node_attribute(label='Video Clip', attribute_type=dpg.mvNode_Attr_Output) as attribute_id:
             dpg.add_text(tag=f'video_name_{node_id}', default_value='Video not loaded')
-            dpg.add_button(label='Load video file', callback=lambda: dpg.show_item("file_dialog_id"))
+            dpg.add_button(label='Load video file', callback=lambda: dpg.show_item("video_file_dialog"))
             add_output(node_id, attribute_id)
 
-        with dpg.node_attribute(label='Preview Video', attribute_type=dpg.mvNode_Attr_Static):
-            dpg.add_button(label='Preview video', callback=lambda: preview_node(node_id))
+        add_preview_video(node_id)
 
     node = node.filter
-
     return node_id
 
 
@@ -84,12 +93,8 @@ def create_noop_filter_node(parent: Union[int, str] = None) -> Union[int, str]:
             dpg.add_text(default_value='Source Video')
             add_input(node_id, attribute_id)
 
-        with dpg.node_attribute(label='Result Video', attribute_type=dpg.mvNode_Attr_Output) as attribute_id:
-            dpg.add_text(default_value='Result Video')
-            add_output(node_id, attribute_id)
-
-        with dpg.node_attribute(label='Preview Video', attribute_type=dpg.mvNode_Attr_Static):
-            dpg.add_button(label='Preview video', callback=lambda: preview_node(node_id))
+        add_result_video(node_id)
+        add_preview_video(node_id)
 
     return node_id
 
@@ -113,12 +118,8 @@ def create_speed_x_filter_node(parent: Union[int, str] = None) -> Union[int, str
             dpg.add_text(default_value='Source Video')
             add_input(node_id, attribute_id)
 
-        with dpg.node_attribute(label='Result Video', attribute_type=dpg.mvNode_Attr_Output) as attribute_id:
-            dpg.add_text(default_value='Result Video')
-            add_output(node_id, attribute_id)
-
-        with dpg.node_attribute(label='Preview Video', attribute_type=dpg.mvNode_Attr_Static):
-            dpg.add_button(label='Preview video', callback=lambda: preview_node(node_id))
+        add_result_video(node_id)
+        add_preview_video(node_id)
 
     node = node.filter
 
@@ -143,12 +144,8 @@ def create_cut_from_filter_node(parent: Union[int, str] = None) -> Union[int, st
             dpg.add_text(default_value='Source Video')
             add_input(node_id, attribute_id)
 
-        with dpg.node_attribute(label='Result Video', attribute_type=dpg.mvNode_Attr_Output) as attribute_id:
-            dpg.add_text(default_value='Result Video')
-            add_output(node_id, attribute_id)
-
-        with dpg.node_attribute(label='Preview Video', attribute_type=dpg.mvNode_Attr_Static):
-            dpg.add_button(label='Preview video', callback=lambda: preview_node(node_id))
+        add_result_video(node_id)
+        add_preview_video(node_id)
 
     node = nodes[node_id].filter
 
@@ -173,12 +170,8 @@ def create_cut_to_filter_node(parent: Union[int, str] = None) -> Union[int, str]
             dpg.add_text(default_value='Source Video')
             add_input(node_id, attribute_id)
 
-        with dpg.node_attribute(label='Result Video', attribute_type=dpg.mvNode_Attr_Output) as attribute_id:
-            dpg.add_text(default_value='Result Video')
-            add_output(node_id, attribute_id)
-
-        with dpg.node_attribute(label='Preview Video', attribute_type=dpg.mvNode_Attr_Static):
-            dpg.add_button(label='Preview video', callback=lambda: preview_node(node_id))
+        add_result_video(node_id)
+        add_preview_video(node_id)
 
     node = node.filter
 
@@ -199,11 +192,47 @@ def create_concat(parent: int | str) -> int | str:
             dpg.add_text(default_value='Second Video')
             add_input(node_id, attribute_id)
 
-        with dpg.node_attribute(label='Result Video', attribute_type=dpg.mvNode_Attr_Output) as attribute_id:
-            dpg.add_text(default_value='Result Video')
+        add_result_video(node_id)
+        add_preview_video(node_id)
+
+    return node_id
+
+
+@builder.decorate('Image Input')
+def create_image_filter(parent: int | str) -> int | str:
+    filter = None
+
+    def callback(sender, app_data):
+        print(app_data)
+        dpg.set_value(f'video_name_{node_id}', app_data['file_name'])
+        node.source = app_data['file_path_name']
+        node.name = app_data['file_path_name']
+        print('aboba')
+
+    def cancel_callback():
+        print('Cancel...')
+
+    with dpg.file_dialog(
+            directory_selector=False, show=False, callback=callback, tag="image_file_dialog",
+            cancel_callback=cancel_callback, width=700, height=400):
+        dpg.add_file_extension('.png', color=(200, 150, 40))
+
+    def duration_callback(sender: int | str, app_data: Any, user_data: Any) -> None:
+        filter.duration = app_data
+
+    with dpg.node(label='Image Input', parent=parent) as node_id:
+        node = Node(node_id, ImageInput(pathlib.Path(''), '', 0))
+        filter = node.filter
+        add_node(node)
+
+        with dpg.node_attribute(label='Duration', attribute_type=dpg.mvNode_Attr_Static) as attribute_id:
+            dpg.add_input_int(label='Duration', callback=duration_callback, width=WIDTH)
+
+        with dpg.node_attribute(label='Image', attribute_type=dpg.mvNode_Attr_Output) as attribute_id:
+            dpg.add_text(tag=f'image_name_{node_id}', default_value='Image not loaded')
+            dpg.add_button(label='Load image file', callback=lambda: dpg.show_item("file_dialog_id"))
             add_output(node_id, attribute_id)
 
-        with dpg.node_attribute(label='Preview Video', attribute_type=dpg.mvNode_Attr_Static):
-            dpg.add_button(label='Preview video', callback=lambda: preview_node(node_id))
+        add_preview_video(node_id)
 
     return node_id
