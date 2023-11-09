@@ -251,11 +251,8 @@ def create_image_filter(parent: int | str) -> int | str:
 def create_rotate_filter(parent: int | str) -> int | str:
     node = None
 
-    def clockwise_callback(sender: int | str, app_data: Any, user_data: Any) -> None:
-        node.filter.clockwise = app_data
-
-    def flip_callback(sender: int | str, app_data: Any, user_data: Any) -> None:
-        node.filter.flip = app_data
+    def angle_callback(sender: int | str, app_data: Any, user_data: Any) -> None:
+        node.filter.angle = app_data
 
     with dpg.node(label='Rotate Filter', parent=parent) as node_id:
         node = Node(node_id, Rotate(False, False))
@@ -265,11 +262,8 @@ def create_rotate_filter(parent: int | str) -> int | str:
             dpg.add_text(default_value='Source Video')
             add_input(node_id, attribute_id)
 
-        with dpg.node_attribute(label='Clockwise', attribute_type=dpg.mvNode_Attr_Static) as attribute_id:
-            dpg.add_checkbox(label='Clockwise', callback=clockwise_callback)
-
-        with dpg.node_attribute(label='Flip', attribute_type=dpg.mvNode_Attr_Static) as attribute_id:
-            dpg.add_checkbox(label='Flip', callback=flip_callback)
+        with dpg.node_attribute(label='Angle', attribute_type=dpg.mvNode_Attr_Static) as attribute_id:
+            dpg.add_input_float(label='Angle', callback=angle_callback, min_value=0, max_value=360, min_clamped=True, max_clamped=True)
 
         add_result_video(node_id)
         add_preview_video(node_id)
