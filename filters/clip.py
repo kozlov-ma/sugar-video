@@ -37,6 +37,9 @@ class Clip:
 
     def __init__(self, name: str, source: pathlib.Path = None):
         self.name = name
+        if name == "":
+            name = str(uuid.uuid4())
+
         if source is None:
             source = pathlib.Path(f"{TEMP_DIR}{uuid.uuid4()}/{name}.mp4")
         self.source = source

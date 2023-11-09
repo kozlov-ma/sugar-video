@@ -1,7 +1,6 @@
 import dataclasses
 import pathlib
 import typing
-import uuid
 from abc import ABC, abstractmethod
 
 import ffmpeg
@@ -43,7 +42,9 @@ class ImageInput(Filter):
     def __call__(self) -> Clip:
         stream = ffmpeg.input(self.source, loop=1, t=self.duration_seconds)
         out = Clip(self.name)
-        ffmpeg.output(stream, filename=out.source).overwrite_output().run()
+        ffmpeg.output(stream, filename=out.source, t=self.duration_seconds,
+                      pix_fmt='yuv420p').overwrite_output().global_args('-vf', 'fps=25', '-c:a', 'aac',
+                                                                        '-shortest').run()
 
         return out
 
@@ -84,10 +85,8 @@ class CutFrom(Filter):
         audio = ffmpeg.input(in_clip.source).audio
         video = ffmpeg.input(in_clip.source).video
 
-        audio = audio.filter("atrim", start=f"{self.timestamp}").filter(
-            "asetpts", "PTS-STARTPTS")
-        video = video.filter("trim", start=f"{self.timestamp}").filter("setpts",
-                                                                       "PTS-STARTPTS")
+        audio = audio.filter("atrim", start=f"{self.timestamp}").filter("asetpts", "PTS-STARTPTS")
+        video = video.filter("trim", start=f"{self.timestamp}").filter("setpts", "PTS-STARTPTS")
 
         ffmpeg.output(video, audio, filename=out_file).overwrite_output().run()
 
@@ -116,10 +115,8 @@ class CutTo(Filter):
         audio = ffmpeg.input(in_clip.source).audio
         video = ffmpeg.input(in_clip.source).video
 
-        audio = audio.filter("atrim", end=f"{self.timestamp}").filter("asetpts",
-                                                                      "PTS-STARTPTS")
-        video = video.filter("trim", end=f"{self.timestamp}").filter("setpts",
-                                                                     "PTS-STARTPTS")
+        audio = audio.filter("atrim", end=f"{self.timestamp}").filter("asetpts", "PTS-STARTPTS")
+        video = video.filter("trim", end=f"{self.timestamp}").filter("setpts", "PTS-STARTPTS")
 
         ffmpeg.output(video, audio, filename=out_file).overwrite_output().run()
 
@@ -160,8 +157,7 @@ class SpeedX(Filter):
 
 @dataclasses.dataclass(repr=True)
 class Rotate(Filter):
-    clockwise: bool
-    flip: bool
+    angle: float
     filter: typing.Union[Filter, None] = None
 
     def __call__(self) -> Clip:
@@ -176,9 +172,7 @@ class Rotate(Filter):
         audio = ffmpeg.input(in_clip.source).audio
         video = ffmpeg.input(in_clip.source).video
 
-        ftype = "clock" if self.clockwise else "cclock" + "_flip" if self.flip else ""
-
-        video = video.filter("transpose", ftype)
+        video = video.filter('rotate', angle=str(self.angle)).output(out_file).run()
 
         create_dirs(out_file)
         ffmpeg.output(video, audio, filename=out_file).overwrite_output().run()
@@ -273,9 +267,6 @@ class Concat(Filter):
         in_first = self.first()
         in_second = self.second()
 
-        duration1 = ffmpeg.probe(in_first.source)['format']['duration']
-        duration2 = ffmpeg.probe(in_second.source)['format']['duration']
-
         audio_first = ffmpeg.input(in_first.source).audio
         video_first = ffmpeg.input(in_first.source).video
 
@@ -289,16 +280,23 @@ class Concat(Filter):
         if self.smooth:
             fade_duration = 1
             fade_in = f"fade=t=in:st=0:d={fade_duration}"
-            fade_out = f"fade=t=out:st={duration2 - fade_duration}:d={fade_duration}"
+            fade_out = f"fade=t=out:st={in_second.duration - fade_duration}:d={fade_duration}"
 
             filter_graph = f"[0:v] {fade_out} [fv]; [1:v] {fade_in} [nextv]; [fv][nextv] overlay=eof_action=pass[outv]"
             video = ffmpeg.concat(video_first, video_second)
 
-            ffmpeg.output(video, audio, filename=new_clip.source, filter_complex=filter_graph).overwrite_output().run()
+            if audio is not None:
+                ffmpeg.output(video, audio, filename=new_clip.source,
+                              filter_complex=filter_graph).overwrite_output().run()
+            else:
+                ffmpeg.output(video, filename=new_clip.source, filter_complex=filter_graph).overwrite_output().run()
         else:
             video = ffmpeg.concat(video_first, video_second)
 
-            ffmpeg.output(video, audio, filename=new_clip.source).overwrite_output().run()
+            if audio is not None:
+                ffmpeg.output(video, audio, filename=new_clip.source).overwrite_output().run()
+            else:
+                ffmpeg.output(video, filename=new_clip.source).overwrite_output().run()
 
         return new_clip
 

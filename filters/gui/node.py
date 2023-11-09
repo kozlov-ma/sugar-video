@@ -80,7 +80,6 @@ def create_video_clip_node(parent: Union[int, str] = None) -> Union[int, str]:
 
         add_preview_video(node_id)
 
-    node = node.filter
     return node_id
 
 
