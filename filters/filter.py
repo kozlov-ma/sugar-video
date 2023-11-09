@@ -42,10 +42,10 @@ class ImageInput(Filter):
 
     def __call__(self) -> Clip:
         stream = ffmpeg.input(self.source, loop=1, t=self.duration_seconds)
+        audio = ffmpeg.input('anullsrc', f='lavfi').audio
         out = Clip(self.name)
-        ffmpeg.output(stream, filename=out.source, t=self.duration_seconds,
-                      pix_fmt='yuv420p').overwrite_output().global_args('-vf', 'fps=25', '-c:a', 'aac',
-                                                                        '-shortest').run()
+        ffmpeg.output(stream, audio, shortest=None, vf="fps=30", vcodec='libx264', pix_fmt='yuv420p',
+                      filename=out.source).overwrite_output().run()
 
         return out
 
@@ -278,26 +278,22 @@ class Concat(Filter):
         new_clip = Clip(new_name)
 
         audio = ffmpeg.concat(audio_first, audio_second, a=1, v=0)
+
+        video = ffmpeg.concat(video_first, video_second)
+
         if self.smooth:
             fade_duration = 1
             fade_in = f"fade=t=in:st=0:d={fade_duration}"
-            fade_out = f"fade=t=out:st={in_second.duration - fade_duration}:d={fade_duration}"
+            fade_out_start_time = in_second.duration - fade_duration - in_first.duration
+            fade_out = f"fade=t=out:st={fade_out_start_time}:d={fade_duration}"
 
-            filter_graph = f"[0:v] {fade_out} [fv]; [1:v] {fade_in} [nextv]; [fv][nextv] overlay=eof_action=pass[outv]"
-            video = ffmpeg.concat(video_first, video_second)
+            filter_graph = (
+                f"[0:v] {fade_out} [fv]; [1:v] {fade_in} [nextv]; [fv][nextv] overlay=eof_action=pass[outv]"
+            )
 
-            if audio is not None:
-                ffmpeg.output(video, audio, filename=new_clip.source,
-                              filter_complex=filter_graph).overwrite_output().run()
-            else:
-                ffmpeg.output(video, filename=new_clip.source, filter_complex=filter_graph).overwrite_output().run()
+            ffmpeg.output(video, audio, filename=new_clip.source, filter_complex=filter_graph).overwrite_output().run()
         else:
-            video = ffmpeg.concat(video_first, video_second)
-
-            if audio is not None:
-                ffmpeg.output(video, audio, filename=new_clip.source).overwrite_output().run()
-            else:
-                ffmpeg.output(video, filename=new_clip.source).overwrite_output().run()
+            ffmpeg.output(video, audio, filename=new_clip.source).overwrite_output().run()
 
         return new_clip
 
