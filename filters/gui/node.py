@@ -3,7 +3,8 @@ from typing import Union, Callable, Any
 import dearpygui.dearpygui as dpg
 from ._node import add_node, Node, add_input, add_output, preview_node, nodes
 from ..timestamp import TimeStamp
-from ..filter import Filter, Noop, VideoInput, SpeedX, CutFrom, CutTo, Concat, ImageInput, Rotate
+from ..filter import (Filter, Noop, VideoInput, SpeedX, CutFrom, CutTo, Concat, ImageInput, Rotate, AudioTrack,
+                      VideoTrack, UniteAudioVideo)
 
 WIDTH = 100
 HEIGHT = 80
@@ -266,6 +267,64 @@ def create_rotate_filter(parent: int | str) -> int | str:
         with dpg.node_attribute(label='Angle', attribute_type=dpg.mvNode_Attr_Static) as attribute_id:
             dpg.add_input_float(label='Angle', callback=angle_callback, min_value=0, max_value=360,
                                 min_clamped=True, max_clamped=True, width=WIDTH)
+
+        add_result_video(node_id)
+        add_preview_video(node_id)
+
+    return node_id
+
+
+@builder.decorate('Video Track')
+def create_video_track_filter(parent: int | str) -> int | str:
+    node = None
+
+    with dpg.node(label='Video Track Filter', parent=parent) as node_id:
+        node = Node(node_id, VideoTrack(None))
+        add_node(node)
+
+        with dpg.node_attribute(label='Source Video', attribute_type=dpg.mvNode_Attr_Input) as attribute_id:
+            dpg.add_text(default_value='Source Video')
+            add_input(node_id, attribute_id)
+
+        add_result_video(node_id)
+        add_preview_video(node_id)
+
+    return node_id
+
+
+@builder.decorate('Audio Track')
+def create_audio_track_filter(parent: int | str) -> int | str:
+    node = None
+
+    with dpg.node(label='Audio Track', parent=parent) as node_id:
+        node = Node(node_id, AudioTrack(None))
+        add_node(node)
+
+        with dpg.node_attribute(label='Source Audio', attribute_type=dpg.mvNode_Attr_Input) as attribute_id:
+            dpg.add_text(default_value='Source Audio')
+            add_input(node_id, attribute_id)
+
+        add_result_video(node_id)
+        add_preview_video(node_id)
+
+    return node_id
+
+
+@builder.decorate('Unite Audio/Video')
+def create_unite_audio_video_filter(parent: int | str) -> int | str:
+    node = None
+
+    with dpg.node(label='Unite Audio/Video Filter', parent=parent) as node_id:
+        node = Node(node_id, UniteAudioVideo(None, None))
+        add_node(node)
+
+        with dpg.node_attribute(label='Source Audio', attribute_type=dpg.mvNode_Attr_Input) as attribute_id:
+            dpg.add_text(default_value='Source Audio')
+            add_input(node_id, attribute_id)
+
+        with dpg.node_attribute(label='Source Video', attribute_type=dpg.mvNode_Attr_Input) as attribute_id:
+            dpg.add_text(default_value='Source Video')
+            add_input(node_id, attribute_id)
 
         add_result_video(node_id)
         add_preview_video(node_id)
