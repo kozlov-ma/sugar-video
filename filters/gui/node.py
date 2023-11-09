@@ -3,7 +3,7 @@ from typing import Union, Callable, Any
 import dearpygui.dearpygui as dpg
 from ._node import add_node, Node, add_input, add_output, preview_node, nodes
 from ..timestamp import TimeStamp
-from ..filter import Filter, Noop, VideoInput, SpeedX, CutFrom, CutTo, Concat, ImageInput
+from ..filter import Filter, Noop, VideoInput, SpeedX, CutFrom, CutTo, Concat, ImageInput, Rotate
 
 WIDTH = 100
 HEIGHT = 80
@@ -57,8 +57,8 @@ def create_video_clip_node(parent: Union[int, str] = None) -> Union[int, str]:
     def callback(sender, app_data):
         print(app_data)
         dpg.set_value(f'video_name_{node_id}', app_data['file_name'])
-        node.source = app_data['file_path_name']
-        node.name = app_data['file_path_name']
+        node.filter.source = app_data['file_path_name']
+        node.filter.name = app_data['file_path_name']
         print('aboba')
 
     def cancel_callback():
@@ -70,7 +70,7 @@ def create_video_clip_node(parent: Union[int, str] = None) -> Union[int, str]:
         dpg.add_file_extension('.mp4', color=(100, 250, 40))
 
     with dpg.node(label='Video Clip', parent=parent) as node_id:
-        node = Node(node_id, VideoInput(pathlib.Path('./Бобер.mp4'), 'Бобер'))
+        node = Node(node_id, VideoInput(pathlib.Path(''), ''))
         add_node(node)
 
         with dpg.node_attribute(label='Video Clip', attribute_type=dpg.mvNode_Attr_Output) as attribute_id:
@@ -243,6 +243,36 @@ def create_image_filter(parent: int | str) -> int | str:
             dpg.add_button(label='Load image file', callback=lambda: dpg.show_item("image_file_dialog"))
             add_output(node_id, attribute_id)
 
+        add_preview_video(node_id)
+
+    return node_id
+
+
+@builder.decorate('Rotate')
+def create_rotate_filter(parent: int | str) -> int | str:
+    node = None
+
+    def clockwise_callback(sender: int | str, app_data: Any, user_data: Any) -> None:
+        node.filter.clockwise = app_data
+
+    def flip_callback(sender: int | str, app_data: Any, user_data: Any) -> None:
+        node.filter.flip = app_data
+
+    with dpg.node(label='Rotate Filter', parent=parent) as node_id:
+        node = Node(node_id, Rotate(False, False))
+        add_node(node)
+
+        with dpg.node_attribute(label='Source Video', attribute_type=dpg.mvNode_Attr_Input) as attribute_id:
+            dpg.add_text(default_value='Source Video')
+            add_input(node_id, attribute_id)
+
+        with dpg.node_attribute(label='Clockwise', attribute_type=dpg.mvNode_Attr_Static) as attribute_id:
+            dpg.add_checkbox(label='Clockwise', callback=clockwise_callback)
+
+        with dpg.node_attribute(label='Flip', attribute_type=dpg.mvNode_Attr_Static) as attribute_id:
+            dpg.add_checkbox(label='Flip', callback=flip_callback)
+
+        add_result_video(node_id)
         add_preview_video(node_id)
 
     return node_id
