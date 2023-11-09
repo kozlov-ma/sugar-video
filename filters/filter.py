@@ -1,4 +1,5 @@
 import dataclasses
+import math
 import pathlib
 import typing
 from abc import ABC, abstractmethod
@@ -172,7 +173,7 @@ class Rotate(Filter):
         audio = ffmpeg.input(in_clip.source).audio
         video = ffmpeg.input(in_clip.source).video
 
-        video = video.filter('rotate', angle=str(self.angle)).output(out_file).run()
+        video = video.filter('rotate', angle=str(math.radians(self.angle)))
 
         create_dirs(out_file)
         ffmpeg.output(video, audio, filename=out_file).overwrite_output().run()
