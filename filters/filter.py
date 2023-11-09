@@ -200,6 +200,8 @@ class VideoTrack(Filter):
 
         video = ffmpeg.input(in_clip.source).video
         ffmpeg.output(video, filename=out_file).overwrite_output().run()
+        
+        return new_clip
 
     def set_filter(self, filter: Filter | None = None, index=0):
         self.filter = filter
@@ -222,6 +224,8 @@ class AudioTrack(Filter):
         audio = ffmpeg.input(in_clip.source).audio
         ffmpeg.output(audio, filename=out_file).overwrite_output().run()
 
+        return new_clip
+
     def set_filter(self, filter: Filter | None = None, index=0):
         self.filter = filter
 
@@ -235,11 +239,10 @@ class UniteAudioVideo(Filter):
         if self.audio is None or self.video is None:
             return None
 
-        in_audio = ffmpeg.input(self.audio()).audio
-        in_video = ffmpeg.input(self.video()).video
+        in_audio = ffmpeg.input(self.audio().source).audio
+        in_video = ffmpeg.input(self.video().source).video
 
-        new_name = f"{in_audio.name} + {in_video.name}"
-        new_clip = Clip(new_name)
+        new_clip = Clip("")
 
         ffmpeg.output(in_video, in_audio, filename=new_clip.source).overwrite_output().run()
 

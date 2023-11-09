@@ -38,6 +38,7 @@ class Clip:
     def __init__(self, name: str, source: pathlib.Path = None):
         self.name = name
         if name == "":
+            self.name = str(uuid.uuid4())
             name = str(uuid.uuid4())
 
         if source is None:
