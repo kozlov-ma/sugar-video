@@ -255,7 +255,7 @@ def create_rotate_filter(parent: int | str) -> int | str:
         node.filter.angle = app_data
 
     with dpg.node(label='Rotate Filter', parent=parent) as node_id:
-        node = Node(node_id, Rotate(False, False))
+        node = Node(node_id, Rotate(0))
         add_node(node)
 
         with dpg.node_attribute(label='Source Video', attribute_type=dpg.mvNode_Attr_Input) as attribute_id:
@@ -263,7 +263,8 @@ def create_rotate_filter(parent: int | str) -> int | str:
             add_input(node_id, attribute_id)
 
         with dpg.node_attribute(label='Angle', attribute_type=dpg.mvNode_Attr_Static) as attribute_id:
-            dpg.add_input_float(label='Angle', callback=angle_callback, min_value=0, max_value=360, min_clamped=True, max_clamped=True)
+            dpg.add_input_float(label='Angle', callback=angle_callback, min_value=0, max_value=360,
+                                min_clamped=True, max_clamped=True, width=WIDTH)
 
         add_result_video(node_id)
         add_preview_video(node_id)
