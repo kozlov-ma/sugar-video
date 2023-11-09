@@ -201,12 +201,13 @@ def create_concat(parent: int | str) -> int | str:
 @builder.decorate('Image Input')
 def create_image_filter(parent: int | str) -> int | str:
     filter = None
+    node_id = None
 
     def callback(sender, app_data):
         print(app_data)
         dpg.set_value(f'image_name_{node_id}', app_data['file_name'])
-        node.source = app_data['file_path_name']
-        node.name = app_data['file_path_name']
+        filter.source = app_data['file_path_name']
+        filter.name = app_data['file_path_name']
         print('aboba')
 
     def cancel_callback():
