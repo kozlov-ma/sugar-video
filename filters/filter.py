@@ -1,6 +1,7 @@
 import dataclasses
 import math
 import pathlib
+import subprocess
 import typing
 from abc import ABC, abstractmethod
 
@@ -285,40 +286,46 @@ class Concat(Filter):
     smooth: bool = False
 
     def __call__(self) -> Clip:
-        if self.first is None or self.second is None:
+        first_clip = self.first()
+        second_clip = self.second()
+
+        if first_clip is None or second_clip is None:
             return None
 
-        in_first = self.first()
-        in_second = self.second()
+        new_clip = Clip("")
 
-        audio_first = ffmpeg.input(in_first.source).audio
-        video_first = ffmpeg.input(in_first.source).video
+        fade_duration = 0.35
 
-        audio_second = ffmpeg.input(in_second.source).audio
-        video_second = ffmpeg.input(in_second.source).video
+        audio_first = ffmpeg.input(first_clip.source).audio
+        audio_second = ffmpeg.input(second_clip.source).audio
 
-        new_name = f"{in_first.name} + {in_second.name}"
-        new_clip = Clip(new_name)
+        video_first = ffmpeg.input(first_clip.source).video
+        video_second = ffmpeg.input(second_clip.source).video
 
         audio = ffmpeg.concat(audio_first, audio_second, a=1, v=0)
-
-        video = ffmpeg.concat(video_first, video_second)
+        out_file = new_clip.source
 
         if self.smooth:
-            fade_duration = 1
-            fade_in = f"fade=t=in:st=0:d={fade_duration}"
-            fade_out_start_time = in_second.duration - fade_duration - in_first.duration
-            fade_out = f"fade=t=out:st={fade_out_start_time}:d={fade_duration}"
+            video_first = ffmpeg.filter(video_first, 'fade', t="out",
+                                        st=first_clip.duration - fade_duration, d=fade_duration)
 
-            filter_graph = (
-                f"[0:v] {fade_out} [fv]; [1:v] {fade_in} [nextv]; [fv][nextv] overlay=eof_action=pass[outv]"
-            )
+            video_second = ffmpeg.filter(video_second, 'fade', t="in",
+                                         st=fade_duration, d=fade_duration)
 
-            ffmpeg.output(video, audio, filename=new_clip.source, filter_complex=filter_graph).overwrite_output().run()
+            video = ffmpeg.concat(video_first, video_second, a=0, v=1)
+
+            ffmpeg.output(video, audio, filename=out_file).overwrite_output().run()
+
+            return new_clip
+
         else:
-            ffmpeg.output(video, audio, filename=new_clip.source).overwrite_output().run()
+            video = ffmpeg.concat(video_first, video_second, v=1, a=0)
 
-        return new_clip
+            create_dirs(out_file)
+
+            ffmpeg.output(video, audio, filename=out_file).overwrite_output().run()
+
+            return new_clip
 
     def set_filter(self, filter: Filter | None = None, index=0):
         match index:
