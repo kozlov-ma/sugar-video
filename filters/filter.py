@@ -200,7 +200,7 @@ class VideoTrack(Filter):
 
         video = ffmpeg.input(in_clip.source).video
         ffmpeg.output(video, filename=out_file).overwrite_output().run()
-        
+
         return new_clip
 
     def set_filter(self, filter: Filter | None = None, index=0):
@@ -236,17 +236,37 @@ class UniteAudioVideo(Filter):
     video: Filter | None = None
 
     def __call__(self) -> Clip:
-        if self.audio is None or self.video is None:
+        audio_clip = self.audio()
+        video_clip = self.video()
+
+        if audio_clip is None or video_clip is None:
             return None
 
-        in_audio = ffmpeg.input(self.audio().source).audio
-        in_video = ffmpeg.input(self.video().source).video
+        audio_duration = audio_clip.duration
+        video_duration = video_clip.duration
 
-        new_clip = Clip("")
+        if audio_duration < video_duration:
+            audio_padded = audio_clip.create_new(new_name="padded_audio")
+            ffmpeg.input(audio_clip.source).output(filename=audio_padded.source, t=video_duration,
+                                                   shortest=None).overwrite_output().run()
+            audio_clip = audio_padded
 
-        ffmpeg.output(in_video, in_audio, filename=new_clip.source).overwrite_output().run()
+        if video_duration < audio_duration:
+            video_padded = video_clip.create_new(new_name="padded_video")
+            ffmpeg.input(video_clip.source).output(filename=video_padded.source, t=audio_duration,
+                                                   shortest=None).overwrite_output().run()
+            video_clip = video_padded
 
-        return new_clip
+        out_clip = video_clip.create_new()
+        out_file = out_clip.source
+        create_dirs(out_file)
+
+        audio = ffmpeg.input(audio_clip.source).audio
+        video = ffmpeg.input(video_clip.source).video
+
+        ffmpeg.output(video, audio, filename=out_file).overwrite_output().run()
+
+        return out_clip
 
     def set_filter(self, filter: Filter | None = None, index=0):
         match index:
