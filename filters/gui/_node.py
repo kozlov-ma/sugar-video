@@ -104,11 +104,5 @@ def preview_node(node_id: Union[int, str]) -> None:
     if clip is None:
         print('No content')
     file = clip.source
-    try:
-        os.system(f'open "{file}"')
-    except Exception as e:
-        print(f"Exception while opening file: {e}")
-        try:
-            os.system(f'xdg-open "{file}"')
-        except Exception as e:
-            print(f"Exception while opening file: {e}")
+    os.system(f'open "{file}"')
+    os.system(f'xdg-open "{file}"')
