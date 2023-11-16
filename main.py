@@ -1,3 +1,3 @@
-from filters.gui.window import run
+from gui import run
 
 run()

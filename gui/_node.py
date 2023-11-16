@@ -2,7 +2,7 @@ import os
 from dataclasses import dataclass
 from typing import Union, List, Dict, Callable, Any
 from enum import Enum
-from ..filter import Filter, Noop, VideoInput, SpeedX, CutFrom, CutTo
+from filters.filter import Filter, Noop, VideoInput, SpeedX, CutFrom, CutTo
 
 
 @dataclass
