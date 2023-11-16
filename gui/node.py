@@ -2,9 +2,9 @@ import pathlib
 from typing import Union, Callable, Any
 import dearpygui.dearpygui as dpg
 from ._node import add_node, Node, add_input, add_output, preview_node, nodes
-from ..timestamp import TimeStamp
-from ..filter import (Filter, Noop, VideoInput, SpeedX, CutFrom, CutTo, Concat, ImageInput, Rotate, AudioTrack,
-                      VideoTrack, UniteAudioVideo)
+from filters.timestamp import TimeStamp
+from filters.filter import (Filter, Noop, VideoInput, SpeedX, CutFrom, CutTo, Concat, ImageInput, Rotate, AudioTrack,
+                            VideoTrack, UniteAudioVideo)
 
 WIDTH = 100
 HEIGHT = 80
@@ -42,14 +42,6 @@ def add_preview_video(node_id: int | str, name: str = 'Preview Video') -> None:
 builder = NodeMenuBuilder()
 
 
-@builder.decorate('Node')
-def create_node(parent: Union[int, str] = None) -> int:
-    with dpg.node(parent=parent) as node_id:
-        add_node(Node(node_id, None))
-
-    return node_id
-
-
 @builder.decorate('Video Clip')
 def create_video_clip_node(parent: Union[int, str] = None) -> Union[int, str]:
     node = None
@@ -79,21 +71,6 @@ def create_video_clip_node(parent: Union[int, str] = None) -> Union[int, str]:
             dpg.add_button(label='Load video file', callback=lambda: dpg.show_item("video_file_dialog"))
             add_output(node_id, attribute_id)
 
-        add_preview_video(node_id)
-
-    return node_id
-
-
-@builder.decorate('Noop')
-def create_noop_filter_node(parent: Union[int, str] = None) -> Union[int, str]:
-    with dpg.node(label='Noop Filter', parent=parent) as node_id:
-        add_node(Node(node_id, Noop()))
-
-        with dpg.node_attribute(label='Source Video', attribute_type=dpg.mvNode_Attr_Input) as attribute_id:
-            dpg.add_text(default_value='Source Video')
-            add_input(node_id, attribute_id)
-
-        add_result_video(node_id)
         add_preview_video(node_id)
 
     return node_id
@@ -270,42 +247,6 @@ def create_rotate_filter(parent: int | str) -> int | str:
 
         add_result_video(node_id)
         add_preview_video(node_id)
-
-    return node_id
-
-
-@builder.decorate('Video Track')
-def create_video_track_filter(parent: int | str) -> int | str:
-    node = None
-
-    with dpg.node(label='Video Track Filter', parent=parent) as node_id:
-        node = Node(node_id, VideoTrack(None))
-        add_node(node)
-
-        with dpg.node_attribute(label='Source Video', attribute_type=dpg.mvNode_Attr_Input) as attribute_id:
-            dpg.add_text(default_value='Source Video')
-            add_input(node_id, attribute_id)
-
-        add_result_video(node_id)
-        add_preview_video(node_id)
-
-    return node_id
-
-
-@builder.decorate('Audio Track')
-def create_audio_track_filter(parent: int | str) -> int | str:
-    node = None
-
-    with dpg.node(label='Audio Track', parent=parent) as node_id:
-        node = Node(node_id, AudioTrack(None))
-        add_node(node)
-
-        with dpg.node_attribute(label='Source Audio', attribute_type=dpg.mvNode_Attr_Input) as attribute_id:
-            dpg.add_text(default_value='Source Audio')
-            add_input(node_id, attribute_id)
-
-        add_result_video(node_id, name='Result Audio')
-        add_preview_video(node_id, name='Preview Audio')
 
     return node_id
 
